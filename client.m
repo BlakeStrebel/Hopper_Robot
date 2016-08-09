@@ -12,8 +12,8 @@ end
 fprintf('Opening port %s....\n',port);
 
 % settings for opening the serial port. baud rate 230400, hardware flow control
-% wait up to 120 seconds for data before timing out
-mySerial = serial(port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',120); 
+% wait up to 60 seconds for data before timing out
+mySerial = serial(port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',60); 
 % opens serial connection
 fopen(mySerial);
 % closes serial port when function exits
@@ -22,7 +22,7 @@ clean = onCleanup(@()fclose(mySerial));
 has_quit = false;
 % menu loop
 while ~has_quit
-    fprintf('PIC32 MOTOR DRIVER INTERFACE\n\n');
+    %fprintf('PIC32 MOTOR DRIVER INTERFACE\n\n');
     % display the menu options
     %fprintf(['     a: Read encoder (counts)                 b: Read encoder (mm)\n' ...
     %         '     c: Reset encoder                         \n' ...   
@@ -91,7 +91,7 @@ while ~has_quit
                fprintf(mySerial,'%f\n',ref(i)); 
             end 
         case 'o'
-            read_plot_matrix(mySerial); 
+            read_plot_matrix(mySerial);
         case 'q'
             has_quit = true;    % exit client
         case 'r'

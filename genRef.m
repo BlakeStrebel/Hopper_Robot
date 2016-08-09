@@ -91,6 +91,7 @@ end
 
 str = sprintf('%d samples at %7.2f Hz taking %5.3f sec', ...
 	      length(ref),MOTOR_SERVO_RATE,reflist(end,1));
+
 figure
 plot(ref);
 title(str);

@@ -19,6 +19,7 @@ int main()
 	encoder_init();
 	io_init();
 	dac_init();
+	positioncontrol_setup();
     __builtin_enable_interrupts();
     
     while(1)
@@ -78,7 +79,6 @@ int main()
             }
 			case 'o':   // Execute trajectory
             {
-                resetINDEX();               // Reset data array index
                 setMODE(TRACK);             // Set mode to track
                 break;
             }

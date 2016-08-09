@@ -114,10 +114,6 @@ void motor_startup(void) {
 	reset_pos();	// reset desired position to 0 mm
 	
 	setMODE(HOLD);	// set MODE to HOLD
-	
-	__builtin_disable_interrupts(); 
-	positioncontrol_setup();
-	__builtin_enable_interrupts();
 }
 
 

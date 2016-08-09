@@ -7,7 +7,6 @@
 static volatile mode MODE;            	// Operating mode
 static volatile control_data_t DATA;    // Struct containing data arrays
 static volatile N;                      // Number of samples to store
-static volatile INDEX = 0;              // Current data position
 
 void setMODE(mode newMODE) {  // Set mode
     MODE = newMODE;     // Update global MODE
@@ -42,49 +41,46 @@ int getN(void){ // Return number of samples to be stored
     return N;                   // Return number of samples to be stored
 }
 
-void write_reference_position(int position)     // Write reference position to data array
+void write_reference_position(float position, int index)     // Write reference position to data array
 {
-    if (INDEX < N)
+    if (index < N)
     {
-        DATA.position_reference[INDEX] = position;
+        DATA.position_reference[index] = position;
     }
-    
-    INDEX++;
 }
 
-void write_actual_position(int position)        // Write actual position to data array
+void write_actual_position(float position, int index)        // Write actual position to data array
 {
-    if (INDEX < N)
+    if (index < N)
     {
-        DATA.position_actual[INDEX] = position;
+        DATA.position_actual[index] = position;
     }
-    
-    INDEX++;
 }
 
-int get_reference_position(int index)           // Return reference position from given index
+void write_current_control(float current, int index)
 {
-    return DATA.position_reference[index];
+	if (index < N)
+	{
+		DATA.current_control[index] = current;
+	}
 }
 
-void resetINDEX(void)   // Reset data array index
+float get_reference_position(int index)           // Return reference position from given index
 {
-    INDEX = 0;
+	return DATA.position_reference[index];
 }
 
 void send_position_data(void)   // Send position data to client for plotting
 {
-    int i; char buffer[20];
+    int i; char buffer[50];
     
     sprintf(buffer,"%d\r\n",N); // Store number of samples in buffer
     NU32_WriteUART3(buffer);    // Send number of samples to client
     
     for (i = 0; i < N; i++) {      
-        sprintf(buffer, "%d %d\r\n",DATA.position_reference[i],DATA.position_actual[i]);   // Store data in buffer
+        sprintf(buffer, "%f %f %f\r\n",DATA.position_reference[i],DATA.position_actual[i],DATA.current_control[i]*100);   // Store data in buffer
         NU32_WriteUART3(buffer);                                                           // Write data to client
     }
-    
-    resetINDEX(); // Reset index 
 }
 
 

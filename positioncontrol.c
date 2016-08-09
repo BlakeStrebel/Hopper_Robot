@@ -7,9 +7,9 @@
 
 
 // PID control gains
-static volatile float Kp = 0.05;	// A/mm
+static volatile float Kp = 0.15;	// A/mm
 static volatile float Ki = 0;	// A/(mm*s)
-static volatile float Kd = 0.05;   // A/(mm/s)  
+static volatile float Kd = 0.55;   // A/(mm/s)  
 static volatile float desired_pos = 0, Eint=0, Eold=0;    
 
 void set_position_gains(void)   // recieve position control gains
@@ -65,6 +65,8 @@ void positioncontrol_setup(void)// setup position control module
     IPC4bits.T4IP = 6;      // Priority
     IFS0bits.T4IF = 0;      // Clear interrupt flag
     IEC0bits.T4IE = 1;      // Enable interrupt
+	
+	setMODE(IDLE);
 }
 
 void load_trajectory(void)      // Load trajectory for tracking
@@ -75,19 +77,17 @@ void load_trajectory(void)      // Load trajectory for tracking
     setN_client();      // Recieve number of samples from client
     n = getN();         // Determine number of samples
     
-    resetINDEX();       // Reset array index
-    
     for (i = 0; i < n; i++)
     {
         NU32_ReadUART3(buffer,50);          // Read reference position from client
-        sscanf(buffer,"%f",&data);          // Store position in data
-        write_reference_position(data);     // Write data to reference position array
+        sscanf(buffer,"%f",&data);         	// Store position in data
+        write_reference_position(data, i);	// Write data to reference position array
     }
-    
-    resetINDEX();    // Reset array index
+	
+	//
 }
 
-void PID_controller(float reference, float actual)  // Calculate control effort
+float PID_controller(float reference, float actual)  // Calculate control effort
 {
     static float Enew, Edot, u;
  
@@ -100,7 +100,7 @@ void PID_controller(float reference, float actual)  // Calculate control effort
         
 	
 	
-    if (u > 1.5)                           // Set max effort (10 A)
+    if (u > 1.5)                           // Set max current (10 A)
     {
         u = 1.5;
     }
@@ -110,13 +110,15 @@ void PID_controller(float reference, float actual)  // Calculate control effort
     }
         
 	setCurrent(u);     // Update DAC to set new current value
+	return u;
 }
 
 
 void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 200 kHz position interrupt
 {
-    static float actual_pos;
+    static float actual_pos, u;
 	static int i = 0;
+	char buffer[50];
     
     switch (getMODE())
     {
@@ -142,8 +144,9 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 200 kHz posit
             {
                 desired_pos = get_reference_position(i);    	// Get desired position
                 actual_pos = encoder_position();          		// Read actual position
-                write_actual_position(actual_pos);        		// Write actual position
-                PID_controller(desired_pos, actual_pos);		// Calculate effort
+                write_actual_position(actual_pos, i);        	// Write actual position
+                u = PID_controller(desired_pos, actual_pos);	// Calculate effort
+				write_current_control(u, i);					// Write control current
                 i++;                                          	// Increment index
             }
             break;

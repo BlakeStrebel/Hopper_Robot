@@ -24,6 +24,7 @@ double encoder_position(void) {
 
 void encoder_reset(void) {
     encoder_command(0);
+	//
 }
 
 void encoder_init(void) {

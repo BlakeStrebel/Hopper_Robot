@@ -7,5 +7,5 @@ void positioncontrol_setup(void);               	// Setup position control modul
 void get_pos(void);                           		// Get desired position from client
 void reset_pos(void);								// Reset desired position to origin (0 mm)
 void load_trajectory(void);                     	// Load desired trajectory from client
-void PID_controller(float reference, float acutal); // Calculates control
+float PID_controller(float reference, float acutal);// Calculates control
 #endif
