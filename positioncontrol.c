@@ -7,9 +7,9 @@
 
 
 // PID control gains
-static volatile float Kp = 0.15;	// A/mm
+static volatile float Kp = 1;	// A/mm
 static volatile float Ki = 0;	// A/(mm*s)
-static volatile float Kd = 0.55;   // A/(mm/s)  
+static volatile float Kd = 3;   // A/(mm/s)  
 static volatile float desired_pos = 0, Eint=0, Eold=0;    
 
 void set_position_gains(void)   // recieve position control gains
@@ -57,9 +57,9 @@ void reset_pos(void)
 
 void positioncontrol_setup(void)// setup position control module
 {
-    // Set up peripheral Timer4 to interrupt at 200 Hz
+    // Set up peripheral Timer4 to interrupt at 1000 Hz
     T4CONbits.TCKPS = 3;    // Timer4 prescalar N = 8
-    PR4 = 49999;            // Frequency = 200 Hz
+    PR4 = 9999;             // Frequency = 1000 Hz
     TMR4 = 0;               // Timer4 initial count 0;
     T4CONbits.ON = 1;       // Turn on Timer4
     IPC4bits.T4IP = 6;      // Priority
@@ -67,6 +67,7 @@ void positioncontrol_setup(void)// setup position control module
     IEC0bits.T4IE = 1;      // Enable interrupt
 	
 	setMODE(IDLE);
+	TRISBbits.TRISB10 = 0;	// heartbeat pin
 }
 
 void load_trajectory(void)      // Load trajectory for tracking
@@ -114,7 +115,7 @@ float PID_controller(float reference, float actual)  // Calculate control effort
 }
 
 
-void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 200 kHz position interrupt
+void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 1 kHz position interrupt
 {
     static float actual_pos, u;
 	static int i = 0;
@@ -151,8 +152,21 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 200 kHz posit
             }
             break;
         }
+		case LOOP:	// Loop reference trajectory
+		{
+		    desired_pos = get_reference_position(i);    	// Get desired position
+			actual_pos = encoder_position();          		// Read actual position
+			u = PID_controller(desired_pos, actual_pos);	// Calculate effort
+			write_current_control(u, i);					// Write control current
+			i++;											// Increment index
+            
+			if (i == getN())
+            { 
+                i = 0;                  // Reset index
+            }
+		}
     } 
-    
+    LATBbits.LATB10 = !(LATBbits.LATB10);
     IFS0bits.T4IF = 0;      // Clear interrupt flag
 }
 

@@ -79,9 +79,14 @@ int main()
             }
 			case 'o':   // Execute trajectory
             {
-                setMODE(TRACK);             // Set mode to track
+                setMODE(TRACK);
                 break;
             }
+			case 'p':	// Loop trajectory
+			{
+				setMODE(LOOP);
+				break;
+			}
 			case 'q':   // Quit
             {
                 setMODE(IDLE);
@@ -108,15 +113,6 @@ int main()
 				NU32_ReadUART3(buffer,BUF_SIZE);
 				sscanf(buffer,"%f",&n);
 				setVoltage(n);
-				break;
-			}
-			case 'z':	// Client test
-			{
-				int n = 0;
-				NU32_ReadUART3(buffer,BUF_SIZE);
-				sscanf(buffer, "%d", &n);
-				sprintf(buffer, "%d\r\n", n+1);
-				NU32_WriteUART3(buffer);
 				break;
 			}
         }

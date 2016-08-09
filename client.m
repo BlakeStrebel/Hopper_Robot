@@ -92,10 +92,12 @@ while ~has_quit
             end 
         case 'o'
             read_plot_matrix(mySerial);
+        case 'p'
+            
         case 'q'
             has_quit = true;    % exit client
         case 'r'
-            modes = {'IDLE';'HOLD';'TRACK'};
+            modes = {'IDLE';'HOLD';'TRACK';'LOOP'};
             mode = fscanf(mySerial,'%d');
             fprintf('The PIC32 controller mode is currently %s.\n',modes{mode+1});
         case 's'
@@ -109,11 +111,6 @@ while ~has_quit
         case 'y' % test dac
             n = input('Enter desired voltage: ');
             fprintf(mySerial,'%f\n',n);
-        case 'z'                            % example operation
-            n = input('Enter number: ');    % get the number to send
-            fprintf(mySerial,'%d\n',n);     % send the number
-            n = fscanf(mySerial,'%d');      % get the incremented number back
-            fprintf('Read: %d\n',n);        % print it to the screen
         otherwise
             fprintf('Invalid Selection %c\n', selection);
     end

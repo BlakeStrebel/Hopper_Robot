@@ -19,5 +19,5 @@ function data = read_plot_matrix(mySerial)
   title(sprintf('Average error: %5.1f mm',score))
   ylabel('Position (mm)')
   xlabel('Time (ms)')
-  legend('reference','actual','current (A/100)')
+  legend('reference','actual','current (mA*10)')
 end

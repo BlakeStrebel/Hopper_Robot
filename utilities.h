@@ -3,7 +3,7 @@
 
 #define DATA_SIZE 2016
 
-typedef enum {IDLE, HOLD, TRACK} mode;    // define data structure containing modes
+typedef enum {IDLE, HOLD, TRACK, LOOP} mode;    // define data structure containing modes
 
 typedef struct {                          // Define data structure containing control data
     float position_reference[DATA_SIZE];

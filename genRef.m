@@ -23,7 +23,7 @@ function ref = genRef(reflist, method)
 % 
 %   Note:  the first time must be 0, and the first and last velocities should be 0.
 
-MOTOR_SERVO_RATE = 200;     % 200 Hz motion control loop
+MOTOR_SERVO_RATE = 1000;    % 1000 Hz motion control loop
 dt = 1/MOTOR_SERVO_RATE;    % time per control cycle
 
 [numpos,numvars] = size(reflist);
