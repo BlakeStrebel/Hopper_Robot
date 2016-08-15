@@ -36,54 +36,13 @@ void io_init(void) {
 	TRISEbits.TRISE2 = 1;
 	TRISEbits.TRISE3 = 1;
 	
-	// turn off outputs
+	// set outputs
 	SWITCH_ON = OFF;
 	HOME = OFF;
 	ERROR_ACK = OFF;
-	SPECIAL_MODE = OFF;
+	SPECIAL_MODE = ON;
 	GO_INIT_POS = OFF; 
 	
-}
-
-void motor_off(void) {
-	SWITCH_ON = OFF;
-	setCurrent(0);
-}
-
-void motor_on(void) {
-	SWITCH_ON = ON;
-}
-
-void state(void)
-{
-	int i; char buffer[10];
-	int state[] = {!SWITCH_ON, !HOME, !ERROR_ACK, !SPECIAL_MODE, !GO_INIT_POS, IN_TARG_POS, WARNING, ERROR, SPECIAL_MOTION}; //logic flipped for outputs
-	
-	for (i = 0; i < 9; i++) {      
-        sprintf(buffer, "%d\r\n",state[i]);  // store data in buffer
-        NU32_WriteUART3(buffer);              // write data to client
-    }
-	
-}
-
-void home(void)
-{
-	HOME = ON;			// begin homing sequence	
-	while (!IN_TARG_POS){
-		;	// wait for homng sequence to complete
-	}
-	encoder_reset();	// set home position
-	HOME = OFF;			// complete homing sequence
-}
-
-void error_ack(void)
-{
-	ERROR_ACK = ON;
-	_CP0_SET_COUNT(0);
-	while (_CP0_GET_COUNT() < 20000000){
-		;
-	}
-	ERROR_ACK = OFF;
 }
 
 void setCurrent(float voltage)
@@ -93,27 +52,67 @@ void setCurrent(float voltage)
 	setVoltage(voltage*scale + offset);
 }
 
-void motor_startup(void) {
+void status(void)
+{
+	int i; char buffer[10];
+	int state[] = {SWITCH_ON, HOME, ERROR_ACK, SPECIAL_MODE, GO_INIT_POS, IN_TARG_POS, WARNING, ERROR, SPECIAL_MOTION}; //logic flipped for outputs
 	
-	setCurrent(0);	// set voltage (motor current) to zero
-	
-	error_ack();	// acknowledge any errors	
+	for (i = 0; i < 9; i++) {      
+        sprintf(buffer, "%d\r\n",state[i]);  // store data in buffer
+        NU32_WriteUART3(buffer);             // write data to client
+    }
+}
 
-	// enable position control of the motor
-	SWITCH_ON = OFF;
+void motor_on(void) {
+	
+	setCurrent(0);	// set current to 0
+	setMODE(IDLE);	// put motor in IDLE mode
+	
+	SWITCH_ON = OFF;						// switch motor off	
+	_CP0_SET_COUNT(0);						
+	while (_CP0_GET_COUNT() < 20000000){;}	// delay
+	SWITCH_ON = ON;							// switch motor on
+	
+	status(); // print status
+}
+
+void motor_home(void) {
+	
+	// perform homing sequency
+	setMODE(HOMING);			// put motor in HOMING mode
+	SPECIAL_MODE = OFF;			// turn off current control
+	HOME = ON;					// allow drive to home motor
+	while (!IN_TARG_POS) {;}	// wait for motor to home
+	HOME = OFF;					// homing complete
+	SPECIAL_MODE = ON;			// turn current control back on
+	encoder_reset();			// reset encoder in new position
+	reset_pos();				// reset desired position to 0	
+	setMODE(HOLD);				// hold position 
+	
+	
+	// Write position to client
+	char buffer[20];
+	encoder_position(); // spi bug correction
+	sprintf(buffer,"%d\r\n",encoder_position());
+	NU32_WriteUART3(buffer);	
+}
+
+void motor_off(void) {
+	SWITCH_ON = OFF;	// switch motor off
+	setCurrent(0);		// set current to 0
+	setMODE(IDLE);		// put motor in IDLE mode
+	status();
+}
+
+void error_ack(void)
+{
+	// acknowledge any errors
+	ERROR_ACK = ON;	
 	_CP0_SET_COUNT(0);
-	while (_CP0_GET_COUNT() < 20000000){
-		;
-	}
+	while (_CP0_GET_COUNT() < 20000000){;}
+	ERROR_ACK = OFF;
 	
-	motor_on();	// Switch on
-	
-	home();				// perform homing sequence
-	SPECIAL_MODE = ON;	// enable current control
-	
-	reset_pos();	// reset desired position to 0 mm
-	
-	setMODE(HOLD);	// set MODE to HOLD
+	status(); // print status
 }
 
 

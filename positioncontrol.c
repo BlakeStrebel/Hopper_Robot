@@ -7,10 +7,10 @@
 
 
 // PID control gains
-static volatile float Kp = 1;	// A/mm
-static volatile float Ki = 0;	// A/(mm*s)
-static volatile float Kd = 3;   // A/(mm/s)  
-static volatile float desired_pos = 0, Eint=0, Eold=0;    
+static volatile float Kp = .00175;	// A/um
+static volatile float Ki = 0;		// A/(um*s)
+static volatile float Kd = .00525;   	// A/(um/s)  
+static volatile int desired_pos = 0, Eint=0, Eold=0;    
 
 void set_position_gains(void)   // recieve position control gains
 {
@@ -27,7 +27,7 @@ void set_position_gains(void)   // recieve position control gains
 
 void get_position_gains(void)   // provide position control gains
 {
-    char buffer[10];
+    char buffer[100];
     sprintf(buffer, "%f\r\n",Kp);   // Extract gains to buffer 
     NU32_WriteUART3(buffer);        // Send gains to client
     sprintf(buffer, "%f\r\n",Ki);
@@ -38,11 +38,11 @@ void get_position_gains(void)   // provide position control gains
 
 void get_pos(void)            // Get desired position from client
 {
-    char buffer [100]; float pos_temp;
+    char buffer [100]; int pos_temp;
     NU32_ReadUART3(buffer,100);			// Read desired angle from client
-    sscanf(buffer,"%f",&pos_temp);    	// Extract angle from buffer
+    sscanf(buffer,"%d",&pos_temp);    	// Extract angle from buffer
     __builtin_disable_interrupts();     // Disable interrupts quickly
-    desired_pos = pos_temp;         	// Set desired angle  
+    desired_pos = pos_temp;         	// Set desired position  
     __builtin_enable_interrupts();      // Reenable interrupts
     Eint = 0;                           // Reset PID error
     Eold = 0;
@@ -57,9 +57,9 @@ void reset_pos(void)
 
 void positioncontrol_setup(void)// setup position control module
 {
-    // Set up peripheral Timer4 to interrupt at 1000 Hz
+    // Set up peripheral Timer4 to interrupt at 2000 Hz
     T4CONbits.TCKPS = 3;    // Timer4 prescalar N = 8
-    PR4 = 9999;             // Frequency = 1000 Hz
+    PR4 = 4999;             // Frequency = 2000 Hz
     TMR4 = 0;               // Timer4 initial count 0;
     T4CONbits.ON = 1;       // Turn on Timer4
     IPC4bits.T4IP = 6;      // Priority
@@ -67,30 +67,27 @@ void positioncontrol_setup(void)// setup position control module
     IEC0bits.T4IE = 1;      // Enable interrupt
 	
 	setMODE(IDLE);
-	TRISBbits.TRISB10 = 0;	// heartbeat pin
 }
 
 void load_trajectory(void)      // Load trajectory for tracking
 {
-    int i, n;
-    float data;
-    char buffer[50];
+    int i, n, data;
+    char buffer[100];
     setN_client();      // Recieve number of samples from client
     n = getN();         // Determine number of samples
     
     for (i = 0; i < n; i++)
     {
-        NU32_ReadUART3(buffer,50);          // Read reference position from client
-        sscanf(buffer,"%f",&data);         	// Store position in data
+        NU32_ReadUART3(buffer,100);         // Read reference position from client
+        sscanf(buffer,"%d",&data);         	// Store position in data
         write_reference_position(data, i);	// Write data to reference position array
     }
-	
-	//
 }
 
-float PID_controller(float reference, float actual)  // Calculate control effort
+float PID_controller(int reference, int actual)  // Calculate control effort
 {
-    static float Enew, Edot, u;
+    static int Enew, Edot;
+	static float u;
  
     Enew = reference - actual;              // Calculate error
     Eint = Eint + Enew;                     // Calculate intergral error
@@ -101,13 +98,13 @@ float PID_controller(float reference, float actual)  // Calculate control effort
         
 	
 	
-    if (u > 1.5)                           // Set max current (10 A)
+    if (u > 3)                           // Set max current (10 A)
     {
-        u = 1.5;
+        u = 3;
     }
-    else if (u < -1.5)
+    else if (u < -3)
     {
-        u = -1.5;
+        u = -3;
     }
         
 	setCurrent(u);     // Update DAC to set new current value
@@ -115,22 +112,21 @@ float PID_controller(float reference, float actual)  // Calculate control effort
 }
 
 
-void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 1 kHz position interrupt
+void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz position interrupt
 {
-    static float actual_pos, u;
-	static int i = 0;
-	char buffer[50];
+    static int actual_pos, i = 0;
+	static float u;
     
     switch (getMODE())
     {
-        case HOLD:  // Hold desired angle
+        case HOLD:  // Hold desired position
         {
-            actual_pos = encoder_position();              // Read position from encoder
-			if (actual_pos > 150 || actual_pos < -5)
+            actual_pos = encoder_position();              	// Read position from encoder
+			if (actual_pos < -50000)
 			{
 				motor_off();
-			}				
-            PID_controller(desired_pos, actual_pos);    // Calculate control
+			}
+            PID_controller(desired_pos, actual_pos);    	// Calculate control
             break;
         }
 		case TRACK: // Track reference trajectory
@@ -138,16 +134,19 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 1 kHz positio
             if (i == getN())    // Done tracking when index equals number of samples
             { 
                 setMODE(HOLD);          // Hold final position
-                send_position_data();   // Send position data to client
-                i = 0;                  // Reset index
+				i = 0;                  // Reset index
             }
             else
             {
                 desired_pos = get_reference_position(i);    	// Get desired position
                 actual_pos = encoder_position();          		// Read actual position
+				if (actual_pos < -50000)
+				{
+					motor_off();
+				}
                 write_actual_position(actual_pos, i);        	// Write actual position
                 u = PID_controller(desired_pos, actual_pos);	// Calculate effort
-				write_current_control(u, i);					// Write control current
+				write_control_current(u, i);					// Write control current
                 i++;                                          	// Increment index
             }
             break;
@@ -156,17 +155,20 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 1 kHz positio
 		{
 		    desired_pos = get_reference_position(i);    	// Get desired position
 			actual_pos = encoder_position();          		// Read actual position
-			u = PID_controller(desired_pos, actual_pos);	// Calculate effort
-			write_current_control(u, i);					// Write control current
-			i++;											// Increment index
+			if (actual_pos < -50000)
+			{
+					motor_off();
+			}
+			PID_controller(desired_pos, actual_pos);	// Calculate effort
+			i++;										// Increment index
             
 			if (i == getN())
             { 
-                i = 0;                  // Reset index
+                i = 0;                  // Reset index (loop)
             }
 		}
     } 
-    LATBbits.LATB10 = !(LATBbits.LATB10);
+ 
     IFS0bits.T4IF = 0;      // Clear interrupt flag
 }
 

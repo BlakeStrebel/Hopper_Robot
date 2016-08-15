@@ -1,7 +1,6 @@
 #include "NU32.h"
 #include "encoder.h"                   
 
-
 static int encoder_command(int read) { // send a command to the encoder chip
                                        // 0 = reset count to 32,768, 1 = return the count
   SPI3BUF = read;                      // send the command
@@ -16,15 +15,14 @@ int encoder_counts(void) {
   return encoder_command(1);
 }
 
-double encoder_position(void) {
-	double position; 
-	position = (32768 - encoder_counts())/(double)100;	// convert counts to position (mm)
+int encoder_position(void) {
+	static int position; 
+	position = (32768 - encoder_counts())*10;	// convert counts to position (um)
     return position;
 }
 
 void encoder_reset(void) {
     encoder_command(0);
-	//
 }
 
 void encoder_init(void) {

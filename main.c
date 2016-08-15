@@ -34,61 +34,88 @@ int main()
 				NU32_WriteUART3(buffer); // send encoder count to client
 				break;
 			}
-			case 'b':	// Read encoder (mm)
+			case 'b':	// Read encoder (um)
 			{
 				encoder_position(); // spi bug correction
-				sprintf(buffer,"%.2f\r\n",encoder_position());
+				sprintf(buffer,"%d\r\n",encoder_position());
 				NU32_WriteUART3(buffer);
 				break;
 			}
-			case 'c':	// Reset encoder
-			{
-				encoder_reset();    // reset encoder count to 32,768
-                break;
-			}
-			case 'i':   // Set position gains
+			case 'c':   // Set position gains
             {
                 set_position_gains();
                 break;
             }
-            case 'j':   // Get position gains
+            case 'd':   // Get position gains
             {
                 get_position_gains();
                 break;
             }
-			case 'k':	// Motor startup
+			case 'e':	// Acknowledge motor error
 			{
-				motor_startup();
+				error_ack();
 				break;
 			}
-			case 'l':   // Go to position (mm)
-            {
-                get_pos();    	// Get desired position from client
-                setMODE(HOLD);  // Set PIC32 to hold specified position
-                break;
-            }
-			case 'm':   // Load step trajectory
+			case 'f':	// Switch off motor
+			{
+				motor_off();
+				break;
+			}
+			case 'g':	// Switch on motor	
+			{
+				motor_on();
+				break;
+			}
+			case 'h':	// Home motor
+			{
+				motor_home();
+				break;
+			}
+			case 'i':   // Load step trajectory
             {
                 load_trajectory();
                 break;
             }
-			case 'n':   // Load cubic trajectory
+			case 'j':   // Load cubic trajectory
             {
                 load_trajectory();
                 break;
             }
-			case 'o':   // Execute trajectory
+			case 'k':   // Execute trajectory
             {
                 setMODE(TRACK);
+				while (getMODE() == TRACK){;}	// wait until tracking is complete
+				send_position_data();   		// Send position data to client
                 break;
             }
-			case 'p':	// Loop trajectory
+			case 'l':	// Loop trajectory
 			{
 				setMODE(LOOP);
 				break;
 			}
+			case 'm':   // Go to position (um)
+            {
+                get_pos();    	// Get desired position from client
+                setMODE(HOLD);  // Set PIC32 to hold specified position
+				_CP0_SET_COUNT(0);
+				while (_CP0_GET_COUNT() < 40000000){;}			// Delay
+				encoder_position(); 							// Spi bug correction		
+				sprintf(buffer,"%d\r\n",encoder_position());	
+				NU32_WriteUART3(buffer);						// Write position to client
+				
+                break;
+            }
+			case 'n':	// Set motor current (A)
+			{
+				float n;
+				NU32_ReadUART3(buffer,BUF_SIZE);
+				sscanf(buffer,"%f",&n);
+				setCurrent(n);
+				break;
+			}
 			case 'q':   // Quit
             {
+				motor_off();
                 setMODE(IDLE);
                 break;
             }
@@ -100,19 +127,15 @@ int main()
             }
 			case 's':	// Get state
 			{
-				state();
+				status();
 				break;
 			}
-			case 'x':	// Turn off motor
+			case 'x': // Client begins collecting data
 			{
-				motor_off();
+				break;
 			}
-			case 'y':	// Test dac
+			case 'y': // Client stops collecting data
 			{
-				float n;
-				NU32_ReadUART3(buffer,BUF_SIZE);
-				sscanf(buffer,"%f",&n);
-				setVoltage(n);
 				break;
 			}
         }
