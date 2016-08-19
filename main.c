@@ -3,7 +3,9 @@
 #include "encoder.h"	
 #include "utilities.h"
 #include "linmot.h"
-#include "dac.h"
+#include "linmot_dac.h"
+#include "blower_dac.h"
+#include "blower.h"
 #include "positioncontrol.h"
 
 
@@ -18,7 +20,8 @@ int main()
     __builtin_disable_interrupts();     // Initialize modules
 	encoder_init();
 	io_init();
-	dac_init();
+	linmot_dac_init();
+	blower_dac_init();
 	positioncontrol_setup();
     __builtin_enable_interrupts();
     
@@ -116,6 +119,7 @@ int main()
 			case 'q':   // Quit
             {
 				motor_off();
+				blower_off();
                 setMODE(IDLE);
                 break;
             }
@@ -136,6 +140,29 @@ int main()
 			}
 			case 'y': // Client stops collecting data
 			{
+				break;
+			}
+			case 'A': // Blower on
+			{
+				blower_on();
+				break;
+			}
+			case 'B':	// Blower off
+			{
+				blower_off();
+				break;
+			}
+			case 'C':	// Set blower frequency	
+			{
+				float frequency;
+				NU32_ReadUART3(buffer,BUF_SIZE);
+				sscanf(buffer,'%f',frequency);
+				setFrequency(frequency);
+				break;
+			}
+			case 'D':	// Read blower frequency
+			{
+				
 				break;
 			}
         }

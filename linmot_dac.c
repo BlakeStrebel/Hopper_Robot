@@ -1,21 +1,17 @@
 #include "dac.h"
 #include "NU32.h"
 
-#define CS_L LATBbits.LATB15	// chip select pin for linear motor
-#define CS_B LATBbits.LATB13	// chip select pin for blower motor
+#define CS LATBbits.LATB15	// chip select pin for linear motor
 
-void dac_init()
+void linmot_dac_init()
 {
-  // SPI4 pins are: SDO4(F5), SCK4(B14)
+  // SPI4 pins are: SDO4(F5), SCK4(B14), SS4(B15)
   
   // set up chip select pins as outputs
   // clear CS to low when a command is beginning
   // set CS to high when a command is ending
   TRISBbits.TRISB15 = 0;
-  TRISBbits.TRISB13 = 0;
-  CS_L = 1;
-  CS_B = 1;
-  
+  CS = 1;
   
   // setup SPI4
   SPI4CON = 0;              // turn off the SPI module and reset it
@@ -25,6 +21,11 @@ void dac_init()
   SPI4CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
   SPI4CONbits.MSTEN = 1;    // master operation
   SPI4CONbits.ON = 1;       // turn on SPI4
+}
+
+void SPI4_setup()
+{
+	
 }
 
 // send a byte via SPI and return the response
@@ -38,7 +39,7 @@ unsigned char SPI4_IO(unsigned char write)
 }
 
 // convert voltage value to 8-bit output level (0-255)
-unsigned char v_convert8(float voltage)
+unsigned char convert8(float voltage)
 {
 	// adjust large values
 	if (voltage > 10)
@@ -68,9 +69,9 @@ void setVoltage_L(float voltage)
 		channel = 0;
 	}
 	
-	output = v_convert8(voltage); //convert voltage to 8-bit output level
+	output = convert8(voltage); //convert voltage to 8-bit output level
 	
-    CS_L = 0; // start writing
+    CS = 0; // start writing
     
     // write data
     // (0-3) config bits 
@@ -79,52 +80,16 @@ void setVoltage_L(float voltage)
 	SPI4_IO((channel << 7 | 0b01110000)|(output >> 4));
     SPI4_IO(output << 4);
    
-    CS_L = 1; // finish writing (latch data)
+    CS = 1; // finish writing (latch data)
 
 	// check for sign change and zero
 	if (!(channel == prev_chan) || output == 0)
 	{
-		CS_L = 0;
+		CS = 0;
 		SPI4_IO((!channel) << 7 | 0b01110000);
 		SPI4_IO(0b00000000);
-		CS_L = 1;
+		CS = 1;
 	}
 	
 	prev_chan = channel;
-}
-
-// convert voltage value to 12-bit output level (0-4095)
-unsigned short v_convert12(float voltage)
-{
-	// set max/min
-	if (voltage > 5)
-	{
-		voltage = 5;
-	} 
-	else if (voltage < 0)
-	{
-		voltage = 0;
-	}
-	
-	return voltage*819;
-}
-
-// set voltage for MCP4921 DAC
-// voltage is fed into FRENIC-mini blower motor driver
-void setVoltage_B(float voltage)
-{    
-	static unsigned short output;
-
-	output = v_convert12(voltage);
-	
-    CS_B = 0; // start writing
-    
-    // write data
-    // (15-12) config bits 
-    // (11-0) 12-bit output level
-    
-	SPI4_IO(0b01110000|(output >> 8));
-    SPI4_IO(0b00000000|output);
-	
-	CS_B = 1; // finish writing (latch data)
 }

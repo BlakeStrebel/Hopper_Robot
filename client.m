@@ -129,6 +129,10 @@ while ~has_quit
             position = fscanf(mySerial,'%d');                       % Get position in um from PIC32
             position = position/1000;                               % Convert position to mm
             fprintf('The motor position is %.2f mm.\n',position);   % Print position
+        case 'n'
+            current = input('Enter desired motor current in amps: ');
+            fprintf(mySerial,'%f\n',current);
+            fprintf('Current set to %f A\n',n);
         case 'q'
             has_quit = true;    % exit client
         case 'r'
@@ -141,11 +145,19 @@ while ~has_quit
                 fprintf('%s = %d\n', STATUS{i},n);
             end
         case 'x'
-            file_name = input('Enter file name for data collection (type_trial_velocity_depth.txt): ');       % Get filename
+            file_name = input('Enter file name for data collection (type_velocity_depth_trial.txt): ');       % Get filename
             fileID = fopen(file_name,'w');                                                              % Open file for writing
         case 'y'
             fclose(fileID);
             fileID = 'none';
+        case 'A'
+            fprintf('Blower on\n');
+        case 'B'
+            fprintf('Blower off\n');
+        case 'C'
+            frequency = input('Enter desired blower frequency in Hz: ');
+            fprintf(mySerial,'%f',frequency);
+            fprintf('Setting blower frequency to %f Hz\n',frequency);
         otherwise
             fprintf('Invalid Selection %c\n', selection);
     end

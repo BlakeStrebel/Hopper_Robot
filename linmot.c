@@ -2,7 +2,7 @@
 #include "NU32.h"
 #include "linmot.h"
 #include "utilities.h"
-#include "dac.h"
+#include "linmot_dac.h"
 #include "encoder.h"
 #include "positioncontrol.h"
 
@@ -49,7 +49,7 @@ void setCurrent(float voltage)
 {
 	static float scale = 1;
 	static float offset = -0.04;
-	setVoltage(voltage*scale + offset);
+	setVoltage_L(voltage*scale + offset);
 }
 
 void status(void)
