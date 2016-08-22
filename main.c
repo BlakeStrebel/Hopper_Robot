@@ -23,6 +23,8 @@ int main()
 	linmot_dac_init();
 	blower_dac_init();
 	positioncontrol_setup();
+	ADC_setup();
+	blower_init();
     __builtin_enable_interrupts();
     
     while(1)
@@ -32,14 +34,14 @@ int main()
         switch (buffer[0]) {
 			case 'a':	// Read encoder (counts)
             {
-                int i = encoder_counts(); // SPI bug correction
+                encoder_counts(); // dsPIC bug correction
 				sprintf(buffer,"%d\r\n",encoder_counts());
 				NU32_WriteUART3(buffer); // send encoder count to client
 				break;
 			}
 			case 'b':	// Read encoder (um)
 			{
-				encoder_position(); // spi bug correction
+				encoder_position(); // dsPIC bug correction
 				sprintf(buffer,"%d\r\n",encoder_position());
 				NU32_WriteUART3(buffer);
 				break;
@@ -84,19 +86,24 @@ int main()
                 load_trajectory();
                 break;
             }
-			case 'k':   // Execute trajectory
+			case 'k':   // Load linear trajectory
+            {
+                load_trajectory();
+                break;
+            }
+			case 'l':   // Execute trajectory
             {
                 setMODE(TRACK);
 				while (getMODE() == TRACK){;}	// wait until tracking is complete
 				send_position_data();   		// Send position data to client
                 break;
             }
-			case 'l':	// Loop trajectory
+			case 'm':	// Loop trajectory
 			{
 				setMODE(LOOP);
 				break;
 			}
-			case 'm':   // Go to position (um)
+			case 'n':   // Go to position (um)
             {
                 get_pos();    	// Get desired position from client
                 setMODE(HOLD);  // Set PIC32 to hold specified position
@@ -108,7 +115,7 @@ int main()
 				
                 break;
             }
-			case 'n':	// Set motor current (A)
+			case 'o':	// Set motor current (A)
 			{
 				float n;
 				NU32_ReadUART3(buffer,BUF_SIZE);
@@ -156,13 +163,14 @@ int main()
 			{
 				float frequency;
 				NU32_ReadUART3(buffer,BUF_SIZE);
-				sscanf(buffer,'%f',frequency);
+				sscanf(buffer,"%f",&frequency);
 				setFrequency(frequency);
 				break;
 			}
 			case 'D':	// Read blower frequency
 			{
-				
+				sprintf(buffer,"%f\r\n",frequency_read());
+				NU32_WriteUART3(buffer); // send frequency to client
 				break;
 			}
         }

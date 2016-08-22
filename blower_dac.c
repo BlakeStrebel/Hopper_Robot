@@ -1,3 +1,6 @@
+#include "NU32.h"
+#include "blower_dac.h"
+
 
 #define CS LATBbits.LATB13	// chip select pin for blower motor
 
@@ -11,7 +14,7 @@ void blower_dac_init()
   TRISBbits.TRISB13 = 0;
   CS = 1;
   
-  // setup SPI4
+  /*
   SPI4CON = 0;              // turn off the SPI module and reset it
   SPI4BUF;                  // clear the rx buffer by reading from it
   SPI4BRG = 0x3;            // baud rate to 20 MHz [SPI4BRG = (80000000/(2*desired))-1]
@@ -19,10 +22,11 @@ void blower_dac_init()
   SPI4CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
   SPI4CONbits.MSTEN = 1;    // master operation
   SPI4CONbits.ON = 1;       // turn on SPI4
+*/
 }
 
 // send a byte via SPI and return the response
-unsigned char SPI4_IO(unsigned char write)
+unsigned char SPI4_IO_B(unsigned char write)
 {
     SPI4BUF = write;
     while(!SPI4STATbits.SPIRBF) { // wait to receive the byte
@@ -61,8 +65,8 @@ void setVoltage_B(float voltage)
     // (15-12) config bits 
     // (11-0) 12-bit output level
     
-	SPI4_IO(0b01110000|(output >> 8));
-    SPI4_IO(0b00000000|output);
+	SPI4_IO_B(0b01110000|(output >> 8));
+    SPI4_IO_B(0b00000000|output);
 	
 	CS = 1; // finish writing (latch data)
 }

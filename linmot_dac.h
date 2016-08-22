@@ -11,6 +11,7 @@ Contains functions which allow writing to digital-to-analog converters used for 
 void linmot_dac_init();
 unsigned char convert8(float voltage);
 void setVoltage_L(float voltage);
+unsigned char SPI4_IO_L(unsigned char write);
 
 
 #endif

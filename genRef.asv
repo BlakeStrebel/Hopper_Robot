@@ -70,29 +70,25 @@ if strcmp(method,'cubic')  % calculate a cubic interpolation trajectory
   
 elseif strcmp(method,'linear')  % calculate a linear interpolation trajectory  
   
-  timelist = reflist(:,1);
-  poslist = reflist(:,2);
-  vellist(numpos) = 0;
-  if numpos >= 3
-    for i=1:numpos-1
-      vellist(i) = (poslist(i+1)-poslist(i))/(timelist(i+1)-timelist(i));
+  % convert the list of times to a list of sample numbers
+  pos_list = reflist(:,2);
+  time_list = reflist(:,1);
+  sample_list = reflist(:,1) * MOTOR_SERVO_RATE;
+  
+  ref = zeros(1,max(sample_list));
+  last_sample = 0;
+  samp = 0;
+  for i=2:numpos
+    if (sample_list(i,1)  <= sample_list(i-1,1))
+      error('Times must be in ascending order.');
     end
+    for samp = last_sample:(sample_list(i)-1)
+      ref(samp+1) = pos_list(i-1);  %%
+    end
+    last_sample = sample_list(i)-1;
   end
+  ref(samp+1) = pos_list(end);
 
-  refCtr = 1;
-  for i=1:numpos-1            % go through each segment of trajectory
-    timestart = timelist(i); timeend = timelist(i+1); 
-    deltaT = timeend - timestart;
-    posstart = poslist(i); posend = poslist(i+1);
-    velstart = vellist(i); velend = vellist(i+1);
-    a0 = posstart;            % calculate coeffs of traj pos = a0+a1*t
-    a1 = velstart;
-    while (refCtr-1)*dt < timelist(i+1)
-      tseg = (refCtr-1)*dt - timelist(i);
-      ref(refCtr) = a0 + a1*tseg;  % add an element to ref array
-      refCtr = refCtr + 1;
-    end
-  end
 else  % default is step trajectory
 
 % convert the list of times to a list of sample numbers

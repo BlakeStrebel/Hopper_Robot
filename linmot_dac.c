@@ -1,4 +1,4 @@
-#include "dac.h"
+#include "linmot_dac.h"
 #include "NU32.h"
 
 #define CS LATBbits.LATB15	// chip select pin for linear motor
@@ -23,13 +23,8 @@ void linmot_dac_init()
   SPI4CONbits.ON = 1;       // turn on SPI4
 }
 
-void SPI4_setup()
-{
-	
-}
-
 // send a byte via SPI and return the response
-unsigned char SPI4_IO(unsigned char write)
+unsigned char SPI4_IO_L(unsigned char write)
 {
     SPI4BUF = write;
     while(!SPI4STATbits.SPIRBF) { // wait to receive the byte
@@ -77,8 +72,8 @@ void setVoltage_L(float voltage)
     // (0-3) config bits 
     // (4-11) 8-bit output level
     // (12-15) XXXX
-	SPI4_IO((channel << 7 | 0b01110000)|(output >> 4));
-    SPI4_IO(output << 4);
+	SPI4_IO_L((channel << 7 | 0b01110000)|(output >> 4));
+    SPI4_IO_L(output << 4);
    
     CS = 1; // finish writing (latch data)
 
@@ -86,8 +81,8 @@ void setVoltage_L(float voltage)
 	if (!(channel == prev_chan) || output == 0)
 	{
 		CS = 0;
-		SPI4_IO((!channel) << 7 | 0b01110000);
-		SPI4_IO(0b00000000);
+		SPI4_IO_L((!channel) << 7 | 0b01110000);
+		SPI4_IO_L(0b00000000);
 		CS = 1;
 	}
 	

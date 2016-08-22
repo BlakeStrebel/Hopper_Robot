@@ -96,7 +96,7 @@ while ~has_quit
                 fprintf('Error: maximum trajectory time is 10 seconds.\n')
             else
                 ref = genRef(trajectory,'step');    % Generate step trajectory
-                ref = ref*1000;                      % Convert trajectory to um
+                ref = ref*1000;                     % Convert trajectory to um
             end
             
             fprintf(mySerial,'%d\n',size(ref,2));   % Send number of samples to PIC32
@@ -117,22 +117,36 @@ while ~has_quit
             fprintf(mySerial,'%d\n',size(ref,2));   % Send number of samples to PIC32
             for i = 1:size(ref,2)                   % Send trajectory to PIC32
                fprintf(mySerial,'%f\n',ref(i)); 
-            end 
+            end
         case 'k'
-            read_plot_matrix(mySerial,fileID); % Execute trajectory and plot results
+            trajectory = input('Enter linear trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:\n');
+            
+            if trajectory(end,1) > 10 % Check that time is less than 10 seconds
+                fprintf('Error: maximum trajectory time is 10 seconds.\n')
+            else
+                ref = genRef(trajectory,'linear');   % Generate cubic trajectory
+                ref = ref*1000;                      % Convert trajectory to um
+            end
+            
+            fprintf(mySerial,'%d\n',size(ref,2));   % Send number of samples to PIC32
+            for i = 1:size(ref,2)                   % Send trajectory to PIC32
+               fprintf(mySerial,'%f\n',ref(i)); 
+            end
         case 'l'
-            fprintf('Looping trajectory ...\n') % Loop trajectory
+            read_plot_matrix(mySerial,fileID); % Execute trajectory and plot results
         case 'm'
+            fprintf('Looping trajectory ...\n') % Loop trajectory
+        case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
             fprintf(mySerial,'%d\n',pos*1000);                  % Convert mm -> um and send position to PIC32       
             fprintf('Motor moving to %f mm.\n',pos);
             position = fscanf(mySerial,'%d');                       % Get position in um from PIC32
             position = position/1000;                               % Convert position to mm
             fprintf('The motor position is %.2f mm.\n',position);   % Print position
-        case 'n'
+        case 'o'
             current = input('Enter desired motor current in amps: ');
             fprintf(mySerial,'%f\n',current);
-            fprintf('Current set to %f A\n',n);
+            fprintf('Current set to %f A\n',current);
         case 'q'
             has_quit = true;    % exit client
         case 'r'
@@ -156,8 +170,11 @@ while ~has_quit
             fprintf('Blower off\n');
         case 'C'
             frequency = input('Enter desired blower frequency in Hz: ');
-            fprintf(mySerial,'%f',frequency);
+            fprintf(mySerial,'%f\n',frequency);
             fprintf('Setting blower frequency to %f Hz\n',frequency);
+        case 'D'
+            frequency = fscanf(mySerial,'%f');
+            fprintf('Motor frequency is %.2f Hz.\n',frequency);
         otherwise
             fprintf('Invalid Selection %c\n', selection);
     end

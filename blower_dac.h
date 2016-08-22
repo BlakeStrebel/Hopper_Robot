@@ -3,7 +3,7 @@
 
 /*
 
-Contains functions which allow writing to digital-to-analog converters used for linear motor
+Contains functions which allow writing to digital-to-analog converters used for blower motor
 
 
 */
@@ -11,6 +11,6 @@ Contains functions which allow writing to digital-to-analog converters used for 
 void blower_dac_init();
 unsigned short convert12(float voltage);
 void setVoltage_B(float voltage);
-
+unsigned char SPI4_IO_B(unsigned char write);
 
 #endif
