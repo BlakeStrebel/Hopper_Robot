@@ -23,8 +23,7 @@ int main()
 	linmot_dac_init();
 	blower_dac_init();
 	positioncontrol_setup();
-	ADC_setup();
-	blower_init();
+	blowercontrol_setup();
     __builtin_enable_interrupts();
     
     while(1)
@@ -171,6 +170,18 @@ int main()
 			{
 				sprintf(buffer,"%f\r\n",frequency_read());
 				NU32_WriteUART3(buffer); // send frequency to client
+				break;
+			}
+			case 'E':	// Execute blower trajectory
+			{
+				setMODE(BLOWER_TRACK);
+				while (getMODE() == BLOWER_TRACK){;}	// wait until tracking is complete
+				send_frequency_data();   				// Send frequency data to client
+				break;
+			}
+			case 'F':	// Load blower trajectory
+			{
+				load_blower_trajectory();
 				break;
 			}
         }

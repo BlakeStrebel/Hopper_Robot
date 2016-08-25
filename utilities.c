@@ -6,7 +6,7 @@
          
 static volatile mode MODE;            	// Operating mode
 static volatile control_data_t DATA;    // Struct containing data arrays
-static volatile int N;                      // Number of samples to store
+static volatile int N;                  // Number of samples to store
 
 void setMODE(mode newMODE) {  // Set mode
     MODE = newMODE;     // Update global MODE

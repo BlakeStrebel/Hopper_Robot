@@ -3,7 +3,7 @@ function client()
 
 port = 'COM5';
 STATUS = {'SWITCH_ON', 'HOME', 'ERROR_ACK', 'SPECIAL_MODE', 'GO_INITAL_POS', 'IN_TARG_POS', 'WARNING', 'ERROR', 'SPECIAL_MOTION'};
-MODES = {'IDLE';'HOLD';'TRACK';'LOOP';'HOMING';'BLOWER_TRACK'};
+MODES = {'IDLE';'HOLD';'TRACK';'LOOP';'HOMING'};
 fileID = 'none';
 
 % Opening COM connection
@@ -40,8 +40,7 @@ while ~has_quit
     %         '     s: Get state\n' ...
     %         '     x: Start data collection                 y: Stop data collection\n'
     %         '     A: Blower on                             B: Blower off\n' ...
-    %         '     C: Set frequency                         D: Read frequency\n' ...
-    %         '     E: Execute blower trajectory             F: Load blower trajectory\n']);
+    %         '     C: Set blower ]);
     
     % read the user's choice
     selection = input('\nENTER COMMAND: ', 's');
@@ -179,21 +178,6 @@ while ~has_quit
         case 'D'
             frequency = fscanf(mySerial,'%f');
             fprintf('Motor frequency is %.2f Hz.\n',frequency);
-        case 'E'
-            read_plot_matrix_blower(mySerial); % Execute trajectory and plot results
-        case 'F'
-            trajectory = input('Enter linear trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:\n');
-            
-            if trajectory(end,1) > 15 % Check that time is less than 15 seconds
-                fprintf('Error: maximum trajectory time is 15 seconds.\n')
-            else
-                ref = genRef_blower(trajectory);   % Generate blower trajectory
-            end
-            
-            fprintf(mySerial,'%d\n',size(ref,2));   % Send number of samples to PIC32
-            for i = 1:size(ref,2)                   % Send trajectory to PIC32
-               fprintf(mySerial,'%f\n',ref(i)); 
-            end
         otherwise
             fprintf('Invalid Selection %c\n', selection);
     end
