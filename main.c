@@ -172,18 +172,7 @@ int main()
 				NU32_WriteUART3(buffer); // send frequency to client
 				break;
 			}
-			case 'E':	// Execute blower trajectory
-			{
-				setMODE(BLOWER_TRACK);
-				while (getMODE() == BLOWER_TRACK){;}	// wait until tracking is complete
-				send_frequency_data();   				// Send frequency data to client
-				break;
-			}
-			case 'F':	// Load blower trajectory
-			{
-				load_blower_trajectory();
-				break;
-			}
+			
         }
     }
 	

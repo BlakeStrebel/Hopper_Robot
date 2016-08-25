@@ -9,7 +9,7 @@
 // PID control gains
 static volatile float Kp = .00175;	// A/um
 static volatile float Ki = 0;		// A/(um*s)
-static volatile float Kd = .00525;   	// A/(um/s)  
+static volatile float Kd = .006;   	// A/(um/s)  
 static volatile int desired_pos = 0, Eint=0, Eold=0;    
 
 void set_position_gains(void)   // recieve position control gains
@@ -59,7 +59,7 @@ void positioncontrol_setup(void)// setup position control module
 {
     // Set up peripheral Timer4 to interrupt at 2000 Hz
     T4CONbits.TCKPS = 3;    // Timer4 prescalar N = 8
-    PR4 = 4999;             // Frequency = 2000 Hz
+    PR4 = 4999;             // Frequency = 2000 Hz (T = (PR4+1)*N*12.5ns)
     TMR4 = 0;               // Timer4 initial count 0;
     T4CONbits.ON = 1;       // Turn on Timer4
     IPC4bits.T4IP = 6;      // Priority
@@ -98,13 +98,13 @@ float PID_controller(int reference, int actual)  // Calculate control effort
         
 	
 	
-    if (u > 3)                           // Set max current (10 A)
+    if (u > 5)                           // Set max current (10 A)
     {
-        u = 3;
+        u = 5;
     }
-    else if (u < -3)
+    else if (u < -5)
     {
-        u = -3;
+        u = -5;
     }
         
 	setCurrent(u);     // Update DAC to set new current value
