@@ -20,9 +20,9 @@ function data = read_plot_matrix_position(mySerial)
   max_current = max(data(:,3))/100;
   max_force = max(data(:,3))/100*12.5;
  
-  fprintf('Max Average current: %.2f\n',max_current)
-  fprintf('Max Average force: %.2f\n',max_force)
-  title(sprintf('Avg error: %5.1f mm Max current: %.2f A',score,max(data(:,3))/100))
+  %fprintf('Max Average current: %.2f\n',max_current);
+  %fprintf('Max Average force: %.2f\n',max_force);
+  title(sprintf('Avg error: %5.1f mm',score))
   ylabel('Position (mm)')
   xlabel('Time (ms)')
   legend('reference','actual','current (100 = 1A)')
