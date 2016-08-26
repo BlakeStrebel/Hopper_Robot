@@ -1,6 +1,7 @@
 function client()
 %   provides a menu for interfacing with hopper robot system
 
+
 % NU32 board serial port
 NU32_port = 'COM5';
 
@@ -25,10 +26,9 @@ fopen(NU32_Serial);
 % closes serial port when function exits
 clean = onCleanup(@()fclose(NU32_Serial)); 
 %clean_XY = onCleanup(@()fclose(XY_Serial));
-
 % globals
 STATUS = {'SWITCH_ON', 'HOME', 'ERROR_ACK', 'SPECIAL_MODE', 'GO_INITAL_POS', 'IN_TARG_POS', 'WARNING', 'ERROR', 'SPECIAL_MOTION'}; 
-MODES = {'IDLE';'HOLD';'TRACK';'LOOP';'HOMING';'BLOWER_TRACK'};
+MODES = {'IDLE';'HOLD';'TRACK';'LOOP';'HOMING'};
 
 
 has_quit = false;
@@ -41,12 +41,13 @@ while ~has_quit
     %         '     c: Set position gains                    d: Get position gains\n' ...
     %         '     e: Acknowledge motor error               f: Motor off\n' ...
     %         '     g: Motor on                              h: Motor home\n' ...
-    %         '     i: Load step trajectory                  j: Load cubic trajectory\n' ...
-    %         '     k: Load linear trajectory                l: Execute trajectory\n' ...                   
-    %         '     m: Loop trajectory\n' ...
-    %         '     n: Go to position                        o: Set motor current\n' ...
+    %         '     i: Load step position trajectory         j: Load cubic position trajectory\n' ...
+    %         '     k: Load linear position trajectory       l: Execute position trajectory\n' ...                   
+    %         '     m: Loop position trajectory              n: Go to position \n' ...
     %         '     q: Quit client                           r: Get mode\n' ...    
     %         '     s: Get state\n' ...
+    %         '     t: Set motor current\n' ...              u: Load current trajectory\n' ...
+    %         '     v: Execute current trajectory\n' ...
     %         '     A: Blower on                             B: Blower off\n' ...
     %         '     C: Set frequency                         D: Read frequency\n' ...
     %         '     \n' ...
@@ -113,7 +114,7 @@ while ~has_quit
             if trajectory(end,1) > 10   % Check that time is less than 10 seconds
                 fprintf('Error: maximum trajectory time is 10 seconds.\n')
             else
-                ref = genRef(trajectory,'step');    % Generate step trajectory
+                ref = genRef_position(trajectory,'step');    % Generate step trajectory
                 ref = ref*1000;                     % Convert trajectory to um
             end
             
@@ -128,7 +129,7 @@ while ~has_quit
             if trajectory(end,1) > 10 % Check that time is less than 10 seconds
                 fprintf('Error: maximum trajectory time is 10 seconds.\n')
             else
-                ref = genRef(trajectory,'cubic');   % Generate cubic trajectory
+                ref = genRef_position(trajectory,'cubic');   % Generate cubic trajectory
                 ref = ref*1000;                      % Convert trajectory to um
             end
             
@@ -142,7 +143,7 @@ while ~has_quit
             if trajectory(end,1) > 10 % Check that time is less than 10 seconds
                 fprintf('Error: maximum trajectory time is 10 seconds.\n')
             else
-                ref = genRef(trajectory,'linear');   % Generate cubic trajectory
+                ref = genRef_position(trajectory,'linear');   % Generate cubic trajectory
                 ref = ref*1000;                      % Convert trajectory to um
             end
             
@@ -151,7 +152,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
-            read_plot_matrix(NU32_Serial,fileID); % Execute trajectory and plot results
+            read_plot_matrix_position(NU32_Serial); % Execute trajectory and plot results
         case 'm'
             fprintf('Looping trajectory ...\n') % Loop trajectory
         case 'n'
@@ -161,10 +162,7 @@ while ~has_quit
             position = fscanf(NU32_Serial,'%d');                       % Get position in um from PIC32
             position = position/1000;                               % Convert position to mm
             fprintf('The motor position is %.2f mm.\n',position);   % Print position
-        case 'o'
-            current = input('Enter desired motor current in amps: ');
-            fprintf(NU32_Serial,'%f\n',current);
-            fprintf('Current set to %f A\n',current);
+
         case 'q'
             has_quit = true;    % exit client
         case 'r'
@@ -176,6 +174,25 @@ while ~has_quit
                 n = fscanf(NU32_Serial, '%d');
                 fprintf('%s = %d\n', STATUS{i},n);
             end
+        case 't'
+            current = input('Enter desired motor current in amps: ');
+            fprintf(NU32_Serial,'%f\n',current);
+            fprintf('Current set to %f A\n',current);
+        case 'u'
+            trajectory = input('Enter linear current trajectory, in sec and A [time1, current1; time2, current2; ...]:\n');
+            
+            if trajectory(end,1) > 10 % Check that time is less than 10 seconds
+                fprintf('Error: maximum trajectory time is 10 seconds.\n')
+            else
+                ref = genRef_current(trajectory,'linear');   % Generate linear trajectory
+            end
+            
+            fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
+            for i = 1:size(ref,2)                   % Send trajectory to PIC32
+               fprintf(NU32_Serial,'%f\n',ref(i)); 
+            end
+        case 'v'
+            read_plot_matrix_current(NU32_Serial);  % Execute trajectory and plot results
         case 'A'
             fprintf('Blower on\n');
         case 'B'

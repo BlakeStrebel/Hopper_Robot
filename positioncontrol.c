@@ -69,7 +69,7 @@ void positioncontrol_setup(void)// setup position control module
 	setMODE(IDLE);
 }
 
-void load_trajectory(void)      // Load trajectory for tracking
+void load_position_trajectory(void)      // Load trajectory for tracking
 {
     int i, n, data;
     char buffer[100];
@@ -82,6 +82,22 @@ void load_trajectory(void)      // Load trajectory for tracking
         sscanf(buffer,"%d",&data);         	// Store position in data
         write_reference_position(data, i);	// Write data to reference position array
     }
+}
+
+void load_current_trajectory(void)      // Load trajectory for tracking
+{
+    int i, n;
+	float data;
+    char buffer[100];
+    setN_client();      // Recieve number of samples from client
+    n = getN();         // Determine number of samples
+   	
+    for (i = 0; i < n; i++)
+    {
+        NU32_ReadUART3(buffer,100);         // Read reference position from client
+        sscanf(buffer,"%f",&data);         	// Store position in data
+        write_current(data, i);				// Write data to reference position array
+	}
 }
 
 float PID_controller(int reference, int actual)  // Calculate control effort
@@ -146,7 +162,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz positio
 				}
                 write_actual_position(actual_pos, i);        	// Write actual position
                 u = PID_controller(desired_pos, actual_pos);	// Calculate effort
-				write_control_current(u, i);					// Write control current
+				write_current(u, i);							// Write control current
                 i++;                                          	// Increment index
             }
             break;
@@ -166,6 +182,26 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz positio
             { 
                 i = 0;                  // Reset index (loop)
             }
+		}
+		case CURRENT_TRACK: // Current trajectory
+		{
+			if (i == getN())
+			{
+				setMODE(IDLE);
+				i = 0;
+				// motor home
+			}
+			else
+			{
+				u = get_reference_current(i);
+				
+				
+				
+				setCurrent(u);
+				actual_pos = encoder_position();
+				write_actual_position(actual_pos,i);
+				i++;
+			}
 		}
     } 
  

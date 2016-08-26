@@ -1,4 +1,4 @@
-function ref = genRef(reflist, method)
+function ref = genRef_position(reflist, method)
 
 % This function takes a list of "via point" times and positions and generates a 
 % trajectory (positions as a function of time, in sample periods) using either

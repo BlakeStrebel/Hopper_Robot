@@ -1,4 +1,4 @@
-function data = read_plot_matrix(mySerial)
+function data = read_plot_matrix_position(mySerial)
 
   nsamples = fscanf(mySerial,'%d');       % first get the number of samples being sent
   data = zeros(nsamples,3);               % two values per sample:  ref and actual

@@ -63,11 +63,13 @@ int main()
 			case 'f':	// Switch off motor
 			{
 				motor_off();
+				status();
 				break;
 			}
 			case 'g':	// Switch on motor	
 			{
 				motor_on();
+				status(); 	// print status
 				break;
 			}
 			case 'h':	// Home motor
@@ -77,20 +79,20 @@ int main()
 			}
 			case 'i':   // Load step trajectory
             {
-                load_trajectory();
+                load_position_trajectory();
                 break;
             }
 			case 'j':   // Load cubic trajectory
             {
-                load_trajectory();
+                load_position_trajectory();
                 break;
             }
 			case 'k':   // Load linear trajectory
             {
-                load_trajectory();
+                load_position_trajectory();
                 break;
             }
-			case 'l':   // Execute trajectory
+			case 'l':   // Execute position trajectory
             {
                 setMODE(TRACK);
 				while (getMODE() == TRACK){;}	// wait until tracking is complete
@@ -110,18 +112,9 @@ int main()
 				while (_CP0_GET_COUNT() < 40000000){;}			// Delay
 				encoder_position(); 							// Spi bug correction		
 				sprintf(buffer,"%d\r\n",encoder_position());	
-				NU32_WriteUART3(buffer);						// Write position to client
-				
+				NU32_WriteUART3(buffer);						// Write position to client	
                 break;
             }
-			case 'o':	// Set motor current (A)
-			{
-				float n;
-				NU32_ReadUART3(buffer,BUF_SIZE);
-				sscanf(buffer,"%f",&n);
-				setCurrent(n);
-				break;
-			}
 			case 'q':   // Quit
             {
 				motor_off();
@@ -140,12 +133,25 @@ int main()
 				status();
 				break;
 			}
-			case 'x': // Client begins collecting data
+			case 't':	// Set motor current (A)
 			{
+				float n;
+				NU32_ReadUART3(buffer,BUF_SIZE);
+				setMODE(CURRENT_SET);
+				sscanf(buffer,"%f",&n);
+				setCurrent(n);
 				break;
 			}
-			case 'y': // Client stops collecting data
+			case 'u':	// Load current trajectory
 			{
+				load_current_trajectory();
+				break;
+			}
+			case 'v':	// Execute current trajectory
+			{
+				setMODE(CURRENT_TRACK);
+				while (getMODE() == CURRENT_TRACK) {;}
+				send_current_data();
 				break;
 			}
 			case 'A': // Blower on

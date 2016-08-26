@@ -72,8 +72,6 @@ void motor_on(void) {
 	_CP0_SET_COUNT(0);						
 	while (_CP0_GET_COUNT() < 20000000){;}	// delay
 	SWITCH_ON = ON;							// switch motor on
-	
-	status(); // print status
 }
 
 void motor_home(void) {
@@ -81,6 +79,7 @@ void motor_home(void) {
 	// perform homing sequency
 	setMODE(HOMING);			// put motor in HOMING mode
 	SPECIAL_MODE = OFF;			// turn off current control
+	motor_on();
 	HOME = ON;					// allow drive to home motor
 	while (!IN_TARG_POS) {;}	// wait for motor to home
 	HOME = OFF;					// homing complete
@@ -101,7 +100,7 @@ void motor_off(void) {
 	SWITCH_ON = OFF;	// switch motor off
 	setCurrent(0);		// set current to 0
 	setMODE(IDLE);		// put motor in IDLE mode
-	status();
+	
 }
 
 void error_ack(void)
