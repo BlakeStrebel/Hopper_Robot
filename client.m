@@ -1,12 +1,8 @@
 function client()
 %   provides a menu for interfacing with hopper robot system
 
-
-% NU32 board serial port
-NU32_port = 'COM5';
-
-% GRBL board serial port
-XY_port = 'COM4';
+NU32_port = 'COM5'; % NU32 board serial port
+XY_port = 'COM4';   % GRBL board serial port
 
 % Opening COM connection
 if ~isempty(instrfind)
@@ -15,21 +11,21 @@ if ~isempty(instrfind)
 end
 
 % configure ports
-XY_Serial = serial(XY_port, 'BaudRate', 115200);
-NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',60); 
+XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',30);
+NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',30); 
 
-fprintf('Opening port %s....\n',NU32_port);
+fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 
 % opens serial connection
 fopen(NU32_Serial);
+fopen(XY_Serial);
 
 % closes serial port when function exits
-clean = onCleanup(@()fclose(NU32_Serial)); 
-%clean_XY = onCleanup(@()fclose(XY_Serial));
+clean = onCleanup(@()cleanup(NU32_Serial,XY_Serial)); 
+
 % globals
 STATUS = {'SWITCH_ON', 'HOME', 'ERROR_ACK', 'SPECIAL_MODE', 'GO_INITAL_POS', 'IN_TARG_POS', 'WARNING', 'ERROR', 'SPECIAL_MOTION'}; 
 MODES = {'IDLE';'HOLD';'TRACK';'LOOP';'HOMING'};
-
 
 has_quit = false;
 
@@ -58,8 +54,7 @@ while ~has_quit
     
     % check where to send the selection
     if strcmp(selection,'1')
-        fclose(NU32_Serial);
-        fopen(XY_Serial);
+        
     else
         fprintf(NU32_Serial,'%c\n',selection);  % send the command to the PIC32
     end

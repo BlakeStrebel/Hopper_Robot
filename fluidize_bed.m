@@ -1,22 +1,23 @@
-function fluidize_bed(mySerial,frequency)
+function fluidize_bed(mySerial,frequency, time)
+% turns on blower to specified frequency for specified length of time
+% acceleration/deceleration rates are configured on drive
 
 fprintf('fluidizing bed ...\n');
 
-% Set frequency
+% set frequency
 selection = 'C'; 
 fprintf(mySerial,'%c\n',selection);
-
 fprintf(mySerial,'%f\n',frequency);
 fprintf('Setting blower frequency to %f Hz\n',frequency);
 
-% Turn on blower
+% turn on blower
 selection = 'A';    
 fprintf(mySerial,'%c\n',selection);
 
-% Wait for bed to fluidize
-pause(8);
+% wait for bed to fluidize
+pause(time);
 
-% Turn off blower
+% turn off blower
 selection = 'B';
 fprintf(mySerial,'%c\n',selection);
 

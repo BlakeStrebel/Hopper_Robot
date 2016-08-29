@@ -1,5 +1,5 @@
 function grbl_startup(mySerial)
-
+% clears serial buffer and homes xy table
 
 fprintf('Homing table ...\n');
 

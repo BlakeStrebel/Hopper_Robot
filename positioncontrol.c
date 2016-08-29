@@ -187,6 +187,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz positio
 		{
 			if (i == getN())
 			{
+				setCurrent(0);
 				setMODE(IDLE);
 				i = 0;
 				// motor home
