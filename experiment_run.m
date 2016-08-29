@@ -4,8 +4,6 @@ function experiment_run(trajectory,mode)
 
 %%
 
-pause(5);
-
 % NU32 board serial port
 NU32_port = 'COM5';
 

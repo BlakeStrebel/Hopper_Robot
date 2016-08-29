@@ -46,7 +46,7 @@ while ~has_quit
     %         '     v: Execute current trajectory\n' ...
     %         '     A: Blower on                             B: Blower off\n' ...
     %         '     C: Set frequency                         D: Read frequency\n' ...
-    %         '     \n' ...
+    %         '     1: GRBL\n' ...
     %         '     : ]);
     
     % read the user's choice
@@ -63,17 +63,17 @@ while ~has_quit
     switch selection
         
         case 'a'
-            counts = fscanf(NU32_Serial,'%d');                         % Get position in counts from PIC32
-            fprintf('The motor position is %d counts.\n',counts);   % Print position
+            counts = fscanf(NU32_Serial,'%d');                      % Get position in counts from PIC32
+            fprintf('The motor position is %d counts.\n',counts);
         case 'b'                        
-            position = fscanf(NU32_Serial,'%d');                       % Get position in um from PIC32
+            position = fscanf(NU32_Serial,'%d');                    % Get position in um from PIC32
             position = position/1000;                               % Convert position to mm
-            fprintf('The motor position is %.2f mm.\n',position);   % Print position
+            fprintf('The motor position is %.2f mm.\n',position);
         case 'c'
             Kp = input('Enter your desired Kp position gain (A/mm): ');     % Get Kp (A/mm)
             Ki = input('Enter your desired Ki position gain (A/(mm*s): ');  % Get Ki (A/(mm*s))
             Kd = input('Enter your desired Kd position gain (A/(mm/s): ');  % Get Kd (A/(mm/s))
-            fprintf(NU32_Serial, '%f %f %f\n',[Kp/1000,Ki/1000,Kd/1000]);      % Convert mm -> um and send gains to PIC32
+            fprintf(NU32_Serial, '%f %f %f\n',[Kp/1000,Ki/1000,Kd/1000]);   % Convert mm -> um and send gains to PIC32
             fprintf('Sending Kp = %3.2f, Ki = %3.2f, and Kd = %3.2f.\n',Kp,Ki,Kd);
         case 'd'
             Kp = fscanf(NU32_Serial, '%f');    % Get Kp (A/um)
@@ -83,26 +83,26 @@ while ~has_quit
         case 'e'
             fprintf('Acknowledging error ...\n');
             for i = 1:9
-                n = fscanf(NU32_Serial, '%d');         % Get motor status 
-                fprintf('%s = %d\n', STATUS{i},n);  % Print motor status
+                n = fscanf(NU32_Serial, '%d');      % Get motor status 
+                fprintf('%s = %d\n', STATUS{i},n);
             end
         case 'f'
-            fprintf('MOTOR OFF\n');             % Turn off motor
+            fprintf('MOTOR OFF\n');             
             for i = 1:9
-                n = fscanf(NU32_Serial, '%d');         % Get motor status 
-                fprintf('%s = %d\n', STATUS{i},n);  % Print motor status
+                n = fscanf(NU32_Serial, '%d');      % Get motor status 
+                fprintf('%s = %d\n', STATUS{i},n);
             end
         case 'g'
-            fprintf('Turning on motor ...\n');  % Turn on motor
+            fprintf('Turning on motor ...\n');
             for i = 1:9
-                n = fscanf(NU32_Serial, '%d');         % Get motor status 
-                fprintf('%s = %d\n', STATUS{i},n);  % Print motor status
+                n = fscanf(NU32_Serial, '%d');      % Get motor status 
+                fprintf('%s = %d\n', STATUS{i},n);
             end
         case 'h'
-            fprintf('Homing ...\n');            % Home motor
-            position = fscanf(NU32_Serial,'%d');                       % Get position in um from PIC32
+            fprintf('Homing ...\n');            
+            position = fscanf(NU32_Serial,'%d');                    % Get position in um from PIC32
             position = position/1000;                               % Convert position to mm
-            fprintf('The motor position is %.2f mm.\n',position);   % Print position
+            fprintf('The motor position is %.2f mm.\n',position);
         case 'i'
             trajectory = input('Enter step trajectory, in sec and mm [time1, ang1; time2, ang2; ...]:\n');
             
@@ -110,7 +110,7 @@ while ~has_quit
                 fprintf('Error: maximum trajectory time is 10 seconds.\n')
             else
                 ref = genRef_position(trajectory,'step');    % Generate step trajectory
-                ref = ref*1000;                     % Convert trajectory to um
+                ref = ref*1000;                              % Convert trajectory to um
             end
             
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
@@ -125,11 +125,12 @@ while ~has_quit
                 fprintf('Error: maximum trajectory time is 10 seconds.\n')
             else
                 ref = genRef_position(trajectory,'cubic');   % Generate cubic trajectory
-                ref = ref*1000;                      % Convert trajectory to um
+                ref = ref*1000;                              % Convert trajectory to um
             end
             
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
-            for i = 1:size(ref,2)                   % Send trajectory to PIC32
+            
+            for i = 1:size(ref,2)                      % Send trajectory to PIC32
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'k'
@@ -139,40 +140,38 @@ while ~has_quit
                 fprintf('Error: maximum trajectory time is 10 seconds.\n')
             else
                 ref = genRef_position(trajectory,'linear');   % Generate cubic trajectory
-                ref = ref*1000;                      % Convert trajectory to um
+                ref = ref*1000;                               % Convert trajectory to um
             end
             
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
-            for i = 1:size(ref,2)                   % Send trajectory to PIC32
+            
+            for i = 1:size(ref,2)                       % Send trajectory to PIC32
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
             read_plot_matrix_position(NU32_Serial); % Execute trajectory and plot results
         case 'm'
-            fprintf('Looping trajectory ...\n') % Loop trajectory
+            fprintf('Looping trajectory ...\n')
         case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
-            fprintf(NU32_Serial,'%d\n',pos*1000);                  % Convert mm -> um and send position to PIC32       
-            fprintf('Motor moving to %f mm.\n',pos);
-            position = fscanf(NU32_Serial,'%d');                       % Get position in um from PIC32
+            fprintf(NU32_Serial,'%d\n',pos*1000);               % Convert mm -> um and send position to PIC32       
+            
+            position = fscanf(NU32_Serial,'%d');                    % Get position in um from PIC32
             position = position/1000;                               % Convert position to mm
-            fprintf('The motor position is %.2f mm.\n',position);   % Print position
-
+            fprintf('The motor position is %.2f mm.\n',position);
         case 'q'
             has_quit = true;    % exit client
         case 'r'
-            
-            mode = fscanf(NU32_Serial,'%d');
+            mode = fscanf(NU32_Serial,'%d');    % Get mode from PIC32
             fprintf('The PIC32 controller mode is currently %s.\n',MODES{mode+1});
         case 's'
             for i = 1:9
-                n = fscanf(NU32_Serial, '%d');
+                n = fscanf(NU32_Serial, '%d');  % Get state from PIC32
                 fprintf('%s = %d\n', STATUS{i},n);
             end
         case 't'
             current = input('Enter desired motor current in amps: ');
-            fprintf(NU32_Serial,'%f\n',current);
-            fprintf('Current set to %f A\n',current);
+            fprintf(NU32_Serial,'%f\n',current); % Send desired current to PIC32
         case 'u'
             trajectory = input('Enter linear current trajectory, in sec and A [time1, current1; time2, current2; ...]:\n');
             
@@ -183,7 +182,8 @@ while ~has_quit
             end
             
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
-            for i = 1:size(ref,2)                   % Send trajectory to PIC32
+            
+            for i = 1:size(ref,2)                      % Send trajectory to PIC32
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'v'
@@ -206,19 +206,21 @@ while ~has_quit
             buffer = fgets(XY_Serial);
             fprintf('%s',buffer);
             
-            is_grbl = true;
+            is_grbl = true; % Continue sending commands until 'x'
+            
             while is_grbl
-                command = input('grbl command: ','s');
+                command = input('grbl command: ','s');  % Get command from user
                 if command == 'x'
                     is_grbl = false;
                     fclose(XY_Serial);
                     fopen(NU32_Serial);
                 else
-                    fprintf(XY_Serial,'%s\n',command);     % Writing some data to the serial port
-                    buffer = fgets(XY_Serial);     % Reading the echo from the grbl to verify correct communication
+                    fprintf(XY_Serial,'%s\n',command);  % Send command to grbl
+                    buffer = fgets(XY_Serial);          % Read the echo from the grbl to verify correct communication
                     fprintf('%s',buffer);
                 end   
             end    
+            
         otherwise
             fprintf('Invalid Selection %c\n', selection);
     end

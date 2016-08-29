@@ -1,5 +1,13 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
+/*
+
+Contains system mode, data buffers, and functions for data handling
+
+*/
+
+
+
 
 #define DATA_SIZE 7501
 

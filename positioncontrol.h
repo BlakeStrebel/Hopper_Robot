@@ -14,7 +14,7 @@ void get_position_gains(void);                  	// Get position gains
 void positioncontrol_setup(void);               	// Setup position control module
 void get_pos(void);                           		// Get desired position from client
 void reset_pos(void);								// Reset desired position to origin (0 um)
-void load_position_trajectory(void);                // Load desired trajectory from client
-void load_current_trajectory(void); 
+void load_position_trajectory(void);                // Load desired position trajectory from client
+void load_current_trajectory(void);					// Load desired current trajectory from client 
 float PID_controller(int reference, int acutal);	// Calculates control
 #endif

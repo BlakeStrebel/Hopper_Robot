@@ -11,7 +11,7 @@ static volatile int R;
 static volatile float reference_frequency[NUMSAMP];
 static volatile float actual_frequency[NUMSAMP];
 
-void blowercontrol_setup(void)// setup position control module
+void blowercontrol_setup(void)// setup blower control module
 {
 
 	TRISDbits.TRISD6 = 0;	// set up blower on/off switch

@@ -187,20 +187,16 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz positio
 		{
 			if (i == getN())
 			{
-				setCurrent(0);
+				i = 0;			// Reset index	
+				setCurrent(0);	// Stop current
 				setMODE(IDLE);
-				i = 0;
-				// motor home
 			}
 			else
 			{
-				u = get_reference_current(i);
-				
-				
-				
-				setCurrent(u);
-				actual_pos = encoder_position();
-				write_actual_position(actual_pos,i);
+				u = get_reference_current(i);			// Read desired current
+				setCurrent(u);							// Set desired current
+				actual_pos = encoder_position();		// Read actual position	
+				write_actual_position(actual_pos,i);	// Write position to buffer
 				i++;
 			}
 		}
