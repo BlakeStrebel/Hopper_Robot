@@ -115,6 +115,18 @@ int main()
 				NU32_WriteUART3(buffer);						// Write position to client	
                 break;
             }
+			case 'o':	// go home
+			{
+				encoder_position(); // dsPIC bug correction
+				sprintf(buffer,"%d\r\n",encoder_position());
+				NU32_WriteUART3(buffer);	// Send client current position
+				load_position_trajectory();	// Load trajectory to return to home
+				setMODE(TRACK);				// Track trajectory
+				while (getMODE() == TRACK){;}
+				sprintf(buffer,"%d\r\n",1);
+				NU32_WriteUART3(buffer);	// Send client confirmation echo
+				break;
+			}
 			case 'q':   // Quit
             {
 				motor_off();

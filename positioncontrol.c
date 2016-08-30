@@ -86,17 +86,17 @@ void load_position_trajectory(void)      // Load trajectory for tracking
 
 void load_current_trajectory(void)      // Load trajectory for tracking
 {
-    int i, n;
+    int i, m;
 	float data;
     char buffer[100];
-    setN_client();      // Recieve number of samples from client
-    n = getN();         // Determine number of samples
+    setM_client();      // Recieve number of samples from client
+    m = getM();         // Determine number of samples
    	
-    for (i = 0; i < n; i++)
+    for (i = 0; i < m; i++)
     {
         NU32_ReadUART3(buffer,100);         // Read reference position from client
         sscanf(buffer,"%f",&data);         	// Store position in data
-        write_current(data, i);				// Write data to reference position array
+        write_reference_current(data, i);				// Write data to reference position array
 	}
 }
 
@@ -118,9 +118,9 @@ float PID_controller(int reference, int actual)  // Calculate control effort
     {
         u = 5;
     }
-    else if (u < -5)
+    else if (u < -1)
     {
-        u = -5;
+        u = -1;
     }
         
 	setCurrent(u);     // Update DAC to set new current value
@@ -128,7 +128,7 @@ float PID_controller(int reference, int actual)  // Calculate control effort
 }
 
 
-void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz position interrupt
+void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position interrupt
 {
     static int actual_pos, i = 0;
 	static float u;
@@ -149,8 +149,9 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz positio
         {
             if (i == getN())    // Done tracking when index equals number of samples
             { 
-                setMODE(HOLD);          // Hold final position
 				i = 0;                  // Reset index
+                setMODE(HOLD);          // Hold final position
+				
             }
             else
             {
@@ -162,7 +163,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz positio
 				}
                 write_actual_position(actual_pos, i);        	// Write actual position
                 u = PID_controller(desired_pos, actual_pos);	// Calculate effort
-				write_current(u, i);							// Write control current
+				write_actual_current(u, i);							// Write control current
                 i++;                                          	// Increment index
             }
             break;
@@ -185,7 +186,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SOFT) PositionController(void)  // 2 kHz positio
 		}
 		case CURRENT_TRACK: // Current trajectory
 		{
-			if (i == getN())
+			if (i == getM())
 			{
 				i = 0;			// Reset index	
 				setCurrent(0);	// Stop current

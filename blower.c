@@ -5,11 +5,6 @@
 #include "utilities.h"
 
 #define BLOWER_ON LATDbits.LATD6
-#define NUMSAMP 301
-
-static volatile int R;
-static volatile float reference_frequency[NUMSAMP];
-static volatile float actual_frequency[NUMSAMP];
 
 void blowercontrol_setup(void)// setup blower control module
 {
