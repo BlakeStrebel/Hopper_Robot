@@ -7,9 +7,9 @@
 
 
 // PID control gains
-static volatile float Kp = .00175;	// A/um
+static volatile float Kp = .0035;	// A/um  .00175
 static volatile float Ki = 0;		// A/(um*s)
-static volatile float Kd = .006;   	// A/(um/s)  
+static volatile float Kd = .008;   	// A/(um/s)  .006
 static volatile int desired_pos = 0, Eint=0, Eold=0;    
 
 void set_position_gains(void)   // recieve position control gains

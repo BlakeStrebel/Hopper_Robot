@@ -151,7 +151,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
-            read_plot_matrix_position(NU32_Serial); % Execute trajectory and plot results
+            read_plot_matrix_position(NU32_Serial,1); % Execute trajectory and plot results
         case 'm'
             fprintf('Looping trajectory ...\n')
         case 'n'

@@ -105,6 +105,7 @@ void write_actual_current(float current, int index)		// Write actual current
 	static float avg_current = 0;
 	
 	decctr++;
+	avg_current += current;
 	if (decctr == DECIMATION)
 	{
 		avg_current /= (float)DECIMATION;
@@ -112,10 +113,7 @@ void write_actual_current(float current, int index)		// Write actual current
 		decctr = 0;
 		avg_current = 0;
 	}
-	else
-	{
-		avg_current += current;
-	}
+		
 }	
 
 

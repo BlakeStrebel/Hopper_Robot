@@ -9,6 +9,7 @@ fileID = fopen(filename,'w');
 fprintf(fileID,'%s\r\n',datetime('today'));
 fprintf(fileID,'mode = %s\r\n',mode);
 fprintf(fileID,'trajectory: [');fprintf(fileID,'%.3f, %.3f;',trajectory);fprintf(fileID,'%c]\r\n',8);
+fprintf(fileID,'foot radius: 1"')
 fprintf(fileID,'blower deceleration time = 20s\r\n');
 fprintf(fileID,'Control loop: 2000Hz\r\n');
 fprintf(fileID,'\r\ncurrent(A)  position(mm)\r\n\r\n');

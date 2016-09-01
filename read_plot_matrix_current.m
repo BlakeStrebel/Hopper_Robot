@@ -1,4 +1,4 @@
-function data = read_plot_matrix_current(mySerial,plot)
+function data = read_plot_matrix_current(mySerial,graph)
 
   nsamples = fscanf(mySerial,'%d');       % first get the number of samples being sent
   data = zeros(nsamples,2);               % two values per sample:  ref and actual
@@ -9,7 +9,7 @@ function data = read_plot_matrix_current(mySerial,plot)
     times(i) = (i-1)*0.5;                  % 0.5 ms between samples
   end
   if nsamples > 1						        
-    if plot == 1
+    if graph == 1
         figure;
         stairs(times,data(:,1:2));            % plot the reference and actual
         max_depth = max(data(:,2));
