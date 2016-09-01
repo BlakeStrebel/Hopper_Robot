@@ -1,4 +1,4 @@
-function experiment_run(trajectory)
+function position_experiment(trajectory)
 % fluidizes bed and runs specified linear motor trajectory at evenly spaced
 % intervals
 

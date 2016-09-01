@@ -114,9 +114,9 @@ float PID_controller(int reference, int actual)  // Calculate control effort
         
 	
 	
-    if (u > 5)                           // Set max current (10 A)
+    if (u > 6)                           // Set max current (10 A)
     {
-        u = 5;
+        u = 6;
     }
     else if (u < -1)
     {

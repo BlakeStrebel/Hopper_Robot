@@ -3,7 +3,9 @@
 #include "utilities.h"
 #include "linmot.h" 
  
-         
+#define DECIMATION 4	// Store every 10th value
+
+ 
 static volatile mode MODE;            	// Operating mode
 static volatile control_data_t DATA;    // Struct containing data arrays
 static volatile int N;                  // Number of position samples to store
@@ -58,7 +60,15 @@ void write_reference_position(int position, int index)     // Write reference po
 
 void write_actual_position(int position, int index)        // Write actual position to data array
 {
-    DATA.position_actual[index] = position;
+	static int decctr = 0;
+	
+	decctr++;
+	if (decctr == DECIMATION)
+	{
+		DATA.position_actual[index/DECIMATION] = position;
+		decctr = 0;
+	}
+	 
 }
 
 int get_reference_position(int index)           		// Return reference position to given index
@@ -70,11 +80,11 @@ void send_position_data(void)   // Send position data to client for plotting
 {
     int i; char buffer[50];
     
-    sprintf(buffer,"%d\r\n",N); // Store number of samples in buffer
+    sprintf(buffer,"%d\r\n",N/DECIMATION); // Store number of samples in buffer
     NU32_WriteUART3(buffer);    // Send number of samples to client
     
-    for (i = 0; i < N; i++) {      
-        sprintf(buffer, "%d %d %f\r\n",DATA.position_reference[i],DATA.position_actual[i],DATA.current_actual[i]*100);   // Store data in buffer
+    for (i = 0; i < N/DECIMATION; i++) {      
+        sprintf(buffer, "%d %d %f\r\n",DATA.position_reference[i*DECIMATION],DATA.position_actual[i],DATA.current_actual[i]);   // Store data in buffer
         NU32_WriteUART3(buffer);  // Write data to client
     }
 }
@@ -91,7 +101,21 @@ float get_reference_current(int index)							// Return reference current from gi
 
 void write_actual_current(float current, int index)		// Write actual current
 {
-	DATA.current_actual[index] = current;
+	static int decctr = 0;
+	static float avg_current = 0;
+	
+	decctr++;
+	if (decctr == DECIMATION)
+	{
+		avg_current /= (float)DECIMATION;
+		DATA.current_actual[index/DECIMATION] = avg_current;
+		decctr = 0;
+		avg_current = 0;
+	}
+	else
+	{
+		avg_current += current;
+	}
 }	
 
 
@@ -99,11 +123,11 @@ void send_current_data(void)									// Send current buffers to client
 {
 	int i; char buffer[50];
     
-    sprintf(buffer,"%d\r\n",M); // Store number of samples in buffer
+    sprintf(buffer,"%d\r\n",M/DECIMATION); // Store number of samples in buffer
     NU32_WriteUART3(buffer);    // Send number of samples to client
     
-    for (i = 0; i < M; i++) {      
-        sprintf(buffer, "%f %d\r\n",DATA.current_reference[i]*100,DATA.position_actual[i]);   // Store data in buffer
+    for (i = 0; i < M/DECIMATION; i++) {      
+        sprintf(buffer, "%f %d\r\n",DATA.current_reference[i*DECIMATION]*100,DATA.position_actual[i]);   // Store data in buffer
         NU32_WriteUART3(buffer);  // Write data to client
     };
 }

@@ -6,16 +6,16 @@ Contains system mode, data buffers, and functions for data handling
 
 */
 
-#define CURRENT_DATA_SIZE 13001		// Adjust sizes to optimize data collection time (or implement circular buffering/decimation)
-#define POSITION_DATA_SIZE 2500		
+#define REFERENCE_DATA 20001		// Adjust sizes to optimize data collection time
+#define ACTUAL_DATA 5002		
 
 typedef enum {IDLE, HOLD, TRACK, LOOP, HOMING, CURRENT_SET, CURRENT_TRACK} mode;    // define data structure containing modes
 
 typedef struct {                          // Define data structure containing control data
-    int position_reference[POSITION_DATA_SIZE];
-    int position_actual[CURRENT_DATA_SIZE];
-	float current_reference[CURRENT_DATA_SIZE];
-	float current_actual[POSITION_DATA_SIZE];
+    int position_reference[REFERENCE_DATA];
+    int position_actual[ACTUAL_DATA];
+	float current_reference[1];
+	float current_actual[ACTUAL_DATA];
 } control_data_t;
 
 // MODE
