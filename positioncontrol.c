@@ -157,10 +157,6 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position
             {
                 desired_pos = get_reference_position(i);    	// Get desired position
                 actual_pos = encoder_position();          		// Read actual position
-				if (actual_pos < -50000)
-				{
-					motor_off();
-				}
                 write_actual_position(actual_pos, i);        	// Write actual position
                 u = PID_controller(desired_pos, actual_pos);	// Calculate effort
 				write_actual_current(u, i);							// Write control current

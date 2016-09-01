@@ -5,8 +5,9 @@
 Linmot AB Encoder Simulation (RS422) is used to determine slider position.
 
 Encoder is configured with:
-	Resolution r (1/4 Period Length): 10um
-	Minimal Edge Separation: 0.2 us
+	Resolution r (1/4 Period Length): 10 um
+	Minimal Edge Separation: 1 us
+	Max velocity: 10um/1us = 10 m/s
 
 Decoder is preprogrammed dsPIC
 (drive) -> (dsPIC)

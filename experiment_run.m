@@ -1,4 +1,4 @@
-function experiment_run(trajectory,mode)
+function experiment_run(trajectory)
 % fluidizes bed and runs specified linear motor trajectory at evenly spaced
 % intervals
 
@@ -31,7 +31,7 @@ clean = onCleanup(@() cleanup(NU32_Serial,XY_Serial)); % close serial ports and 
 %%
 
 % fluidize the bed
-frequency = 55;
+frequency = 56;
 fluidize_bed(NU32_Serial,frequency, 8); 
 
 % startup the linear motor
@@ -47,15 +47,8 @@ pause(3);
 
 fprintf('Generating trajectory ...\n');
 
-if strcmp(mode,'position')
-    selection = 'j';    % cubic position trajectory
-    plunge = 'l';       
-elseif strcmp(mode,'current')
-    selection = 'u';    % linear current trajectory
-    plunge = 'v';
-else
-    fprintf('invalid mode\n');
-end
+selection = 'j';
+plunge = 'l';       
 
 fprintf(NU32_Serial,'%c\n',selection);
 
@@ -76,6 +69,7 @@ for i = 1:5
         % plunge
         fprintf(NU32_Serial,'%c\n',plunge);
         read_plot_matrix_position(NU32_Serial);
+
         
         % move in the y direction
         if mod(i,2) == 1

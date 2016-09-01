@@ -74,6 +74,12 @@ void motor_on(void) {
 	SWITCH_ON = ON;							// switch motor on
 }
 
+void motor_off(void) {
+	SWITCH_ON = OFF;	// switch motor off
+	setCurrent(0);		// set current to 0
+	setMODE(IDLE);		// put motor in IDLE mode
+}
+
 void motor_home(void) {
 	
 	// perform homing sequency
@@ -96,11 +102,23 @@ void motor_home(void) {
 	NU32_WriteUART3(buffer);	
 }
 
-void motor_off(void) {
-	SWITCH_ON = OFF;	// switch motor off
-	setCurrent(0);		// set current to 0
-	setMODE(IDLE);		// put motor in IDLE mode
+void go_home(void) {
+	SPECIAL_MODE = OFF;			// turn off current control
+	GO_INIT_POS = ON;			// allow drive to return motor to initial position
+	_CP0_SET_COUNT(0);						
+	while (_CP0_GET_COUNT() < 20000000){;}	// delay
+	while (!IN_TARG_POS) {;}	// wait
+	GO_INIT_POS = OFF;			// motor is in initial position
+	SPECIAL_MODE = ON;			// turn on current control
+	encoder_reset();			// reset encoder in new position
+	reset_pos();				// reset desired position to 0
+	setMODE(HOLD);				// hold position
 	
+	// Write position to client
+	char buffer[20];
+	encoder_position(); // spi bug correction
+	sprintf(buffer,"%d\r\n",encoder_position());
+	NU32_WriteUART3(buffer);
 }
 
 void error_ack(void)

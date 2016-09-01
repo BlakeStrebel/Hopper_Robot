@@ -39,6 +39,7 @@ void setCurrent(float voltage);	// Update dac to set motor current
 void status(void);				// Print motor status
 void motor_on(void);			// Turn on motor
 void motor_home(void);			// Home motor
+void go_home(void);				// Send motor to initial position without homing
 void motor_off(void);			// Turn off motor
 void error_ack(void);			// Acknowledge motor error
 

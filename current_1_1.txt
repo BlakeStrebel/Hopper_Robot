@@ -1,0 +1,8 @@
+8/30/2016
+mode = current
+max current = 1A
+ramp rate = +1A/s
+2000Hz
+
+current(A)  position(mm)
+

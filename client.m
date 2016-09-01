@@ -21,7 +21,8 @@ fopen(NU32_Serial);
 fopen(XY_Serial);
 
 % closes serial port when function exits
-clean = onCleanup(@()cleanup(NU32_Serial,XY_Serial)); 
+clean1 = onCleanup(@()fclose(NU32_Serial));
+clean2 = onCleanup(@()fclose(XY_Serial));
 
 % globals
 STATUS = {'SWITCH_ON', 'HOME', 'ERROR_ACK', 'SPECIAL_MODE', 'GO_INITAL_POS', 'IN_TARG_POS', 'WARNING', 'ERROR', 'SPECIAL_MOTION'}; 
@@ -55,7 +56,7 @@ while ~has_quit
     
     % check where to send the selection
     if strcmp(selection,'1')
-        
+      % don't send command to PIC32  
     else
         fprintf(NU32_Serial,'%c\n',selection);  % send the command to the PIC32
     end
@@ -160,20 +161,10 @@ while ~has_quit
             position = fscanf(NU32_Serial,'%d');                    % Get position in um from PIC32
             position = position/1000;                               % Convert position to mm
             fprintf('The motor position is %.2f mm.\n',position);
-        case 'o'
-            position = fscanf(NU32_Serial,'%d');            % Get position in um from PIC32
-            position = position/1000                       % Convert position to mm
-            
-            trajectory = [0,position;.5,position/2;1,0]
-            ref = genRef_position(trajectory,'linear');     % Generate trajectory to home 
-            ref = ref*1000;                                 % Convert trajectory to um
-            
-            fprintf(NU32_Serial,'%d\n',size(ref,2));        % Send number of samples to PIC32
-            for i = 1:size(ref,2)                           % Send trajectory to PIC32
-               fprintf(NU32_Serial,'%f\n',ref(i)); 
-            end
-            
-            fscanf(NU32_Serial,'%d')   % Read echo from PIC32
+        case 'o'            
+            position = fscanf(NU32_Serial,'%d');                    % Get position in um from PIC32
+            position = position/1000;                               % Convert position to mm
+            fprintf('The motor position is %.2f mm.\n',position);
         case 'q'
             has_quit = true;    % exit client
         case 'r'
@@ -202,7 +193,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'v'
-            read_plot_matrix_current(NU32_Serial);  % Execute trajectory and plot results
+            read_plot_matrix_current(NU32_Serial,1);  % Execute trajectory and plot results
         case 'A'
             fprintf('Blower on\n');
         case 'B'
