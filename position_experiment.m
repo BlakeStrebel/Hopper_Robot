@@ -1,7 +1,7 @@
 function position_experiment()
 
 %%
-trajectory = [0,0;5,50;10,100];
+trajectory = [0,0;1,50;2,0];
 mode = 'linear';
 filename = sprintf('p_%s_%.3f_%.3f.txt',mode,max(trajectory(:,1)),max(trajectory(:,2)));
 

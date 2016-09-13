@@ -1,36 +1,36 @@
 #include "linmot_dac.h"
 #include "NU32.h"
 
-#define CS LATBbits.LATB15	// chip select pin for linear motor
+#define CS LATDbits.LATD4	// chip select pin for linear motor
 
 void linmot_dac_init()
 {
-  // SPI4 pins are: SDO4(F5), SCK4(B14), SS4(B15)
+  // SPI3 pins are: SDO3(D2), SCK3(D1), SS3(D4)
   
   // set up chip select pins as outputs
   // clear CS to low when a command is beginning
   // set CS to high when a command is ending
-  TRISBbits.TRISB15 = 0;
+  TRISDbits.TRISD4 = 0;
   CS = 1;
   
-  // setup SPI4
-  SPI4CON = 0;              // turn off the SPI module and reset it
-  SPI4BUF;                  // clear the rx buffer by reading from it
-  SPI4BRG = 0x3;            // baud rate to 20 MHz [SPI4BRG = (80000000/(2*desired))-1]
-  SPI4STATbits.SPIROV = 0;  // clear the overflow bit
-  SPI4CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
-  SPI4CONbits.MSTEN = 1;    // master operation
-  SPI4CONbits.ON = 1;       // turn on SPI4
+  // setup SPI3
+  SPI3CON = 0;              // turn off the SPI module and reset it
+  SPI3BUF;                  // clear the rx buffer by reading from it
+  SPI3BRG = 0x3;            // baud rate to 20 MHz [SPI4BRG = (80000000/(2*desired))-1]
+  SPI3STATbits.SPIROV = 0;  // clear the overflow bit
+  SPI3CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
+  SPI3CONbits.MSTEN = 1;    // master operation
+  SPI3CONbits.ON = 1;       // turn on SPI4
 }
 
 // send a byte via SPI and return the response
-unsigned char SPI4_IO_L(unsigned char write)
+unsigned char SPI3_IO_L(unsigned char write)
 {
-    SPI4BUF = write;
-    while(!SPI4STATbits.SPIRBF) { // wait to receive the byte
+    SPI3BUF = write;
+    while(!SPI3STATbits.SPIRBF) { // wait to receive the byte
         ;
     }
-    return SPI4BUF;
+    return SPI3BUF;
 }
 
 // convert voltage value to 8-bit output level (0-255)
@@ -72,8 +72,8 @@ void setVoltage_L(float voltage)
     // (0-3) config bits 
     // (4-11) 8-bit output level
     // (12-15) XXXX
-	SPI4_IO_L((channel << 7 | 0b01110000)|(output >> 4));
-    SPI4_IO_L(output << 4);
+	SPI3_IO_L((channel << 7 | 0b01110000)|(output >> 4));
+    SPI3_IO_L(output << 4);
    
     CS = 1; // finish writing (latch data)
 
@@ -81,8 +81,8 @@ void setVoltage_L(float voltage)
 	if (!(channel == prev_chan) || output == 0)
 	{
 		CS = 0;
-		SPI4_IO_L((!channel) << 7 | 0b01110000);
-		SPI4_IO_L(0b00000000);
+		SPI3_IO_L((!channel) << 7 | 0b01110000);
+		SPI3_IO_L(0b00000000);
 		CS = 1;
 	}
 	

@@ -92,7 +92,7 @@ void motor_home(void) {
 	SPECIAL_MODE = ON;			// turn current control back on
 	encoder_reset();			// reset encoder in new position
 	reset_pos();				// reset desired position to 0	
-	setMODE(HOLD);				// hold position 
+	setMODE(POSITION_HOLD);				// hold position 
 	
 	
 	// Write position to client
@@ -103,6 +103,8 @@ void motor_home(void) {
 }
 
 void go_home(void) {
+	
+	setMODE(HOMING);
 	SPECIAL_MODE = OFF;			// turn off current control
 	GO_INIT_POS = ON;			// allow drive to return motor to initial position
 	_CP0_SET_COUNT(0);						
@@ -112,7 +114,7 @@ void go_home(void) {
 	SPECIAL_MODE = ON;			// turn on current control
 	encoder_reset();			// reset encoder in new position
 	reset_pos();				// reset desired position to 0
-	setMODE(HOLD);				// hold position
+	setMODE(POSITION_HOLD);				// hold position
 	
 	// Write position to client
 	char buffer[20];

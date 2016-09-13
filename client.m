@@ -12,7 +12,7 @@ end
 
 % configure ports
 XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',30);
-NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',30); 
+NU32_Serial = serial(NU32_port, 'BaudRate', 403200, 'FlowControl', 'hardware','Timeout',30); 
 
 fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 
@@ -40,7 +40,7 @@ while ~has_quit
     %         '     g: Motor on                              h: Motor home\n' ...
     %         '     i: Load step position trajectory         j: Load cubic position trajectory\n' ...
     %         '     k: Load linear position trajectory       l: Execute position trajectory\n' ...                   
-    %         '     m: Loop position trajectory              n: Go to position \n' ...
+    %         '                   n: Go to position \n' ...
     %         '     o: Go home\n' ...
     %         '     q: Quit client                           r: Get mode\n' ...    
     %         '     s: Get state\n' ...
@@ -108,13 +108,9 @@ while ~has_quit
         case 'i'
             trajectory = input('Enter step trajectory, in sec and mm [time1, ang1; time2, ang2; ...]:\n');
             
-            if trajectory(end,1) > 10   % Check that time is less than 10 seconds
-                fprintf('Error: maximum trajectory time is 10 seconds.\n')
-            else
-                ref = genRef_position(trajectory,'step');    % Generate step trajectory
-                ref = ref*1000;                              % Convert trajectory to um
-            end
-            
+            ref = genRef_position(trajectory,'step');    % Generate step trajectory
+            ref = ref*1000;                              % Convert trajectory to um
+          
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
             
             for i = 1:size(ref,2)                   % Send trajectory to PIC32
@@ -123,13 +119,9 @@ while ~has_quit
         case 'j'
             trajectory = input('Enter cubic trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:\n');
             
-            if trajectory(end,1) > 10 % Check that time is less than 10 seconds
-                fprintf('Error: maximum trajectory time is 10 seconds.\n')
-            else
-                ref = genRef_position(trajectory,'cubic');   % Generate cubic trajectory
-                ref = ref*1000;                              % Convert trajectory to um
-            end
-            
+            ref = genRef_position(trajectory,'cubic');   % Generate cubic trajectory
+            ref = ref*1000;                              % Convert trajectory to um
+        
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
             
             for i = 1:size(ref,2)                      % Send trajectory to PIC32
@@ -138,22 +130,16 @@ while ~has_quit
         case 'k'
             trajectory = input('Enter linear trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:\n');
             
-            if trajectory(end,1) > 10 % Check that time is less than 10 seconds
-                fprintf('Error: maximum trajectory time is 10 seconds.\n')
-            else
-                ref = genRef_position(trajectory,'linear');   % Generate cubic trajectory
-                ref = ref*1000;                               % Convert trajectory to um
-            end
-            
+            ref = genRef_position(trajectory,'linear');   % Generate cubic trajectory
+            ref = ref*1000;                               % Convert trajectory to um
+                        
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
             
             for i = 1:size(ref,2)                       % Send trajectory to PIC32
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
-            read_plot_matrix_position(NU32_Serial,1); % Execute trajectory and plot results
-        case 'm'
-            fprintf('Looping trajectory ...\n')
+            read_plot_matrix_position(NU32_Serial,1,ref) % Execute trajectory and plot results
         case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
             fprintf(NU32_Serial,'%d\n',pos*1000);               % Convert mm -> um and send position to PIC32       
@@ -202,9 +188,6 @@ while ~has_quit
             frequency = input('Enter desired blower frequency in Hz: ');
             fprintf(NU32_Serial,'%f\n',frequency);
             fprintf('Setting blower frequency to %f Hz\n',frequency);
-        case 'D'
-            frequency = fscanf(NU32_Serial,'%f');
-            fprintf('Motor frequency is %.2f Hz.\n',frequency);
         case '1'
             fgets(XY_Serial);   % Clear startup text in serial input
             buffer = fgets(XY_Serial);

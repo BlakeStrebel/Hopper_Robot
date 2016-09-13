@@ -118,8 +118,8 @@ write : $(TARGET).hex $(TARGET).dis
 
 .PHONY: putty
 putty :
-	"$(TERMEMU)" -serial -sercfg 230400,R "$(PORT)"
+	"$(TERMEMU)" -serial -sercfg 403200,R "$(PORT)"
 
 .PHONY: screen
 screen :
-	"$(TERMEMU)" "$(PORT)" 230400,crtscts
+	"$(TERMEMU)" "$(PORT)" 403200,crtscts

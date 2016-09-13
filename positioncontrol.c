@@ -7,10 +7,24 @@
 
 
 // PID control gains
-static volatile float Kp = .0035;	// A/um  .00175
+static volatile float Kp = .00175;	// A/um
 static volatile float Ki = 0;		// A/(um*s)
-static volatile float Kd = .008;   	// A/(um/s)  .006
+static volatile float Kd = .006;   	// A/(um/s)
 static volatile int desired_pos = 0, Eint=0, Eold=0;    
+
+void positioncontrol_setup(void)// setup position control module
+{
+    // Set up peripheral Timer4 to interrupt at 2000 Hz
+    T4CONbits.TCKPS = 3;    // Timer4 prescalar N = 8
+    PR4 = 4999;             // Frequency = 2000 Hz (T = (PR4+1)*N*12.5ns)
+    TMR4 = 0;               // Timer4 initial count 0;
+    T4CONbits.ON = 1;       // Turn on Timer4
+    IPC4bits.T4IP = 6;      // Priority
+    IFS0bits.T4IF = 0;      // Clear interrupt flag
+    IEC0bits.T4IE = 1;      // Enable interrupt
+	
+	setMODE(IDLE);
+}
 
 void set_position_gains(void)   // recieve position control gains
 {
@@ -55,20 +69,6 @@ void reset_pos(void)
 	__builtin_enable_interrupts();
 }
 
-void positioncontrol_setup(void)// setup position control module
-{
-    // Set up peripheral Timer4 to interrupt at 2000 Hz
-    T4CONbits.TCKPS = 3;    // Timer4 prescalar N = 8
-    PR4 = 4999;             // Frequency = 2000 Hz (T = (PR4+1)*N*12.5ns)
-    TMR4 = 0;               // Timer4 initial count 0;
-    T4CONbits.ON = 1;       // Turn on Timer4
-    IPC4bits.T4IP = 6;      // Priority
-    IFS0bits.T4IF = 0;      // Clear interrupt flag
-    IEC0bits.T4IE = 1;      // Enable interrupt
-	
-	setMODE(IDLE);
-}
-
 void load_position_trajectory(void)      // Load trajectory for tracking
 {
     int i, n, data;
@@ -86,13 +86,13 @@ void load_position_trajectory(void)      // Load trajectory for tracking
 
 void load_current_trajectory(void)      // Load trajectory for tracking
 {
-    int i, m;
+    int i, n;
 	float data;
     char buffer[100];
-    setM_client();      // Recieve number of samples from client
-    m = getM();         // Determine number of samples
+    setN_client();      // Recieve number of samples from client
+    n = getN();         // Determine number of samples
    	
-    for (i = 0; i < m; i++)
+    for (i = 0; i < n; i++)
     {
         NU32_ReadUART3(buffer,100);         // Read reference position from client
         sscanf(buffer,"%f",&data);         	// Store position in data
@@ -112,8 +112,6 @@ float PID_controller(int reference, int actual)  // Calculate control effort
     
     u = Kp*Enew + Ki*Eint + Kd*Edot;        // Calculate effort
         
-	
-	
     if (u > 6)                           // Set max current (10 A)
     {
         u = 6;
@@ -135,54 +133,32 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position
     
     switch (getMODE())
     {
-        case HOLD:  // Hold desired position
+        case POSITION_HOLD:  // Hold desired position
         {
             actual_pos = encoder_position();              	// Read position from encoder
-			if (actual_pos < -50000)
-			{
-				motor_off();
-			}
             PID_controller(desired_pos, actual_pos);    	// Calculate control
             break;
         }
-		case TRACK: // Track reference trajectory
+		case POSITION_TRACK: // Track position trajectory
         {
             if (i == getN())    // Done tracking when index equals number of samples
             { 
 				i = 0;                  // Reset index
-                setMODE(HOLD);          // Hold final position
-				
+                setMODE(POSITION_HOLD);          // Hold final position
             }
             else
             {
                 desired_pos = get_reference_position(i);    	// Get desired position
                 actual_pos = encoder_position();          		// Read actual position
-                write_actual_position(actual_pos, i);        	// Write actual position
                 u = PID_controller(desired_pos, actual_pos);	// Calculate effort
-				write_actual_current(u, i);							// Write control current
+				buffer_write(actual_pos,u);						// Write data to buffer	
                 i++;                                          	// Increment index
             }
             break;
         }
-		case LOOP:	// Loop reference trajectory
+		case CURRENT_TRACK: // Track current trajectory
 		{
-		    desired_pos = get_reference_position(i);    	// Get desired position
-			actual_pos = encoder_position();          		// Read actual position
-			if (actual_pos < -50000)
-			{
-					motor_off();
-			}
-			PID_controller(desired_pos, actual_pos);	// Calculate effort
-			i++;										// Increment index
-            
 			if (i == getN())
-            { 
-                i = 0;                  // Reset index (loop)
-            }
-		}
-		case CURRENT_TRACK: // Current trajectory
-		{
-			if (i == getM())
 			{
 				i = 0;			// Reset index	
 				setCurrent(0);	// Stop current
@@ -193,7 +169,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position
 				u = get_reference_current(i);			// Read desired current
 				setCurrent(u);							// Set desired current
 				actual_pos = encoder_position();		// Read actual position	
-				write_actual_position(actual_pos,i);	// Write position to buffer
+				buffer_write(actual_pos, u);			// Write data to buffer
 				i++;
 			}
 		}

@@ -94,20 +94,14 @@ int main()
             }
 			case 'l':   // Execute position trajectory
             {
-                setMODE(TRACK);
-				while (getMODE() == TRACK){;}	// wait until tracking is complete
-				send_position_data();   		// Send position data to client
+                setMODE(POSITION_TRACK);	// Begin tracking
+				send_data();				// Send data to client as it becomes available
                 break;
             }
-			case 'm':	// Loop trajectory
-			{
-				setMODE(LOOP);
-				break;
-			}
 			case 'n':   // Go to position (um)
             {
                 get_pos();    	// Get desired position from client
-                setMODE(HOLD);  // Set PIC32 to hold specified position
+                setMODE(POSITION_HOLD);  // Set PIC32 to hold specified position
 				_CP0_SET_COUNT(0);
 				while (_CP0_GET_COUNT() < 40000000){;}			// Delay
 				encoder_position(); 							// Spi bug correction		
@@ -142,7 +136,7 @@ int main()
 			{
 				float n;
 				NU32_ReadUART3(buffer,BUF_SIZE);
-				setMODE(CURRENT_SET);
+				setMODE(CURRENT_HOLD);
 				sscanf(buffer,"%f",&n);
 				setCurrent(n);
 				break;
@@ -154,9 +148,8 @@ int main()
 			}
 			case 'v':	// Execute current trajectory
 			{
-				setMODE(CURRENT_TRACK);
-				while (getMODE() == CURRENT_TRACK) {;}
-				send_current_data();
+				setMODE(CURRENT_TRACK);	// Begin tracking
+				send_data();			// Send data to client as it becomes available	
 				break;
 			}
 			case 'A': // Blower on
@@ -177,13 +170,6 @@ int main()
 				setFrequency(frequency);
 				break;
 			}
-			case 'D':	// Read blower frequency
-			{
-				sprintf(buffer,"%f\r\n",frequency_read());
-				NU32_WriteUART3(buffer); // send frequency to client
-				break;
-			}
-			
         }
     }
 	
