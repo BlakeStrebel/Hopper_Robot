@@ -13,14 +13,14 @@ void linmot_dac_init()
   TRISDbits.TRISD4 = 0;
   CS = 1;
   
-  // setup SPI3
+/*   // setup SPI3
   SPI3CON = 0;              // turn off the SPI module and reset it
   SPI3BUF;                  // clear the rx buffer by reading from it
   SPI3BRG = 0x3;            // baud rate to 20 MHz [SPI4BRG = (80000000/(2*desired))-1]
   SPI3STATbits.SPIROV = 0;  // clear the overflow bit
   SPI3CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
   SPI3CONbits.MSTEN = 1;    // master operation
-  SPI3CONbits.ON = 1;       // turn on SPI4
+  SPI3CONbits.ON = 1;       // turn on SPI3 */
 }
 
 // send a byte via SPI and return the response

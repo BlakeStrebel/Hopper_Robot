@@ -29,7 +29,7 @@ void encoder_init(void) {
   // SPI initialization for reading from the decoder chip
   SPI3CON = 0;              // stop and reset SPI3
   SPI3BUF;                  // read to clear the rx receive buffer
-  SPI3BRG = 0x4;            // bit rate to 8 MHz, SPI4BRG = 80000000/(2*desired)-1
+  SPI3BRG = 0x3;            // bit rate to 20 MHz, SPI4BRG = 80000000/(2*desired)-1
   SPI3STATbits.SPIROV = 0;  // clear the overflow
   SPI3CONbits.MSTEN = 1;    // master mode
   SPI3CONbits.MSSEN = 1;    // slave select enable
