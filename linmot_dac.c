@@ -28,7 +28,7 @@ void linmot_dac_init()
 }
 
 // send two bytes via SPI and return the response
-unsigned short SPI3_IO_L(unsigned short write)
+static int SPI3_IO_L(unsigned short write)
 {
     SPI3BUF = write;
     while(!SPI3STATbits.SPIRBF) { // wait to receive the byte
@@ -77,7 +77,7 @@ void setVoltage_L(float voltage)
 	if (!(channel == prev_chan) || output == 0)
 	{
 		CS = 0;
-		SPI3_IO_L((!channel) << 15 | 0x7000)); 	// set output level to zero
+		SPI3_IO_L((!channel) << 15 | 0x7000); 	// set output level to zero
 		CS = 1;
 	}
 	

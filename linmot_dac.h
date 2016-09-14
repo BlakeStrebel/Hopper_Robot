@@ -11,7 +11,7 @@ MCP4902
 void linmot_dac_init();							// initialize dac control
 unsigned char convert8(float voltage);			// convert float to 8 bit voltage output level
 void setVoltage_L(float voltage);				// set linmot dac voltage
-unsigned char SPI3_IO_L(unsigned char write);	// send a byte over spi and return the response
+static int SPI3_IO_L(unsigned short write);		// send two bytes over spi and return the response
 
 
 #endif
