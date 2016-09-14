@@ -17,13 +17,13 @@ int main()
     NU32_Startup(); // cache on, min flash wait, interrupts on, LED/button init, UART init
     NU32_LED1 = 1; NU32_LED2 = 1;  // turn off LEDs
    
-    __builtin_disable_interrupts();     // Initialize modules
-	encoder_init();
-	io_init();
-	linmot_dac_init();
-	blower_dac_init();
-	positioncontrol_setup();
-	blowercontrol_setup();
+    __builtin_disable_interrupts();
+	encoder_init();				// Setup SPI3 for encoder communication 
+	io_init();					// Setup linear motor I/O pins
+	linmot_dac_init();			// Setup CS pin for SPI3 communication
+	blower_dac_init();			// Setup CS pin for SPI4 communication
+	positioncontrol_setup();	// Setup control loop interrupt
+	blowercontrol_setup();		// Setup blower on/off pin
     __builtin_enable_interrupts();
     
     while(1)

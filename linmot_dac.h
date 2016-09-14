@@ -4,6 +4,7 @@
 /*
 
 Contains functions which allow writing to digital-to-analog converters used for linear motor
+MCP4902
 
 */
 

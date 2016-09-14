@@ -8,10 +8,8 @@
 
 void blowercontrol_setup(void)// setup blower control module
 {
-
 	TRISDbits.TRISD6 = 0;	// set up blower on/off switch
 	blower_off();			// turn off blower
-	
 }
 
 void blower_on(void)
