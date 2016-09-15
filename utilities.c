@@ -65,6 +65,11 @@ float buffer_read_current() {	// reads current from current buffer location; ass
 	return current;
 }
 
+int buffer_read_force() {
+	int force = DATA.force_actual[read];
+	return force;
+}
+
 void buffer_read_increment() {	// increment the buffer read location
 	++read;	// increment buffer read index
 	if (read >= BUFLEN) {	// wraparound read location if necessary
@@ -72,10 +77,11 @@ void buffer_read_increment() {	// increment the buffer read location
 	}
 }
 
-void buffer_write(int actual_position, float actual_current) { 	// write data to buffer
+void buffer_write(int actual_position, float actual_current, int actual_force) { 	// write data to buffer
   if(!buffer_full()) {        // if the buffer is full the data is lost
     DATA.position_actual[write] = actual_position;	// write motor position to buffer
 	DATA.current_actual[write] = actual_current;	// write motor current to buffer
+	DATA.force_actual[write] = actual_force;		// write force to buffer
     ++write;                  // increment the write index and wrap around if necessary
     if(write >= BUFLEN) {
       write = 0;
@@ -92,7 +98,7 @@ void send_data(void)
 	
 	for(sent = 0; sent < N; ++sent) { // send the samples to the client
 		while(buffer_empty()) { ; }             								// wait for data to be in the queue
-		sprintf(msg,"%d %f\r\n",buffer_read_position(),buffer_read_current());  // read from buffer 
+		sprintf(msg,"%d %f %d\r\n",buffer_read_position(),buffer_read_current(),buffer_read_force());  // read from buffer 
 		NU32_WriteUART3(msg);													// send data over uart
 		buffer_read_increment();												// increment buffer read index
   }

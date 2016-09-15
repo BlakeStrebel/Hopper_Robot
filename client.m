@@ -180,6 +180,8 @@ while ~has_quit
             end
         case 'v'
             read_plot_matrix_current(NU32_Serial,1);  % Execute trajectory and plot results
+        case 'x'
+            force_record(NU32_Serial);
         case 'A'
             fprintf('Blower on\n');
         case 'B'

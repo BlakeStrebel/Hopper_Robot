@@ -16,20 +16,22 @@ int main()
     char buffer[BUF_SIZE];
     NU32_Startup(); // cache on, min flash wait, interrupts on, LED/button init, UART init
     NU32_LED1 = 1; NU32_LED2 = 1;  // turn off LEDs
-   
-    __builtin_disable_interrupts();
+	
+	__builtin_disable_interrupts();
 	encoder_init();				// Setup SPI3 for encoder communication 
 	io_init();					// Setup linear motor I/O pins
 	linmot_dac_init();			// Setup CS pin for SPI3 communication
 	blower_dac_init();			// Setup CS pin for SPI4 communication
 	positioncontrol_setup();	// Setup control loop interrupt
-	blowercontrol_setup();		// Setup blower on/off pin
+	force_sensor_init();		// Setup SPI4 for ADC communication	
+	//blowercontrol_setup();		// Setup blower on/off pin
     __builtin_enable_interrupts();
     
     while(1)
     {
         NU32_ReadUART3(buffer,BUF_SIZE); // Expect next character to be a menu command
         NU32_LED2 = 1;                   // Clear the error LED
+
         switch (buffer[0]) {
 			case 'a':	// Read encoder (counts)
             {
@@ -150,6 +152,15 @@ int main()
 			{
 				setMODE(CURRENT_TRACK);	// Begin tracking
 				send_data();			// Send data to client as it becomes available	
+				break;
+			}
+			case 'w':
+			{
+				force_read();
+			}
+			case 'x':
+			{
+				setMODE(FORCE_RECORD);
 				break;
 			}
 			case 'A': // Blower on

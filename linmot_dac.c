@@ -14,8 +14,8 @@ void linmot_dac_init()
   CS = 1;
   
 
-/*   SPI3CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
-    // SPI initialization for reading from the decoder chip
+/*
+  // SPI initialization for reading from the decoder chip
   SPI3CON = 0;              // stop and reset SPI3
   SPI3BUF;                  // read to clear the rx receive buffer
   SPI3BRG = 0x3;            // bit rate to 20 MHz, SPI4BRG = 80000000/(2*desired)-1

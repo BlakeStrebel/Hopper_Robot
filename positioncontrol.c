@@ -4,7 +4,7 @@
 #include "utilities.h"
 #include "linmot.h"
 #include "encoder.h"
-
+#include "force_sensor.h"
 
 // PID control gains
 static volatile float Kp = .00175;	// A/um
@@ -128,7 +128,7 @@ float PID_controller(int reference, int actual)  // Calculate control effort
 
 void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position interrupt
 {
-    static int actual_pos, i = 0;
+    static int actual_pos, actual_force, i = 0;
 	static float u;
     
     switch (getMODE())
@@ -150,8 +150,9 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position
             {
                 desired_pos = get_reference_position(i);    	// Get desired position
                 actual_pos = encoder_position();          		// Read actual position
+				actual_force = adc_read();
                 u = PID_controller(desired_pos, actual_pos);	// Calculate effort
-				buffer_write(actual_pos,u);						// Write data to buffer	
+				buffer_write(actual_pos,u, actual_force);						// Write data to buffer	
                 i++;                                          	// Increment index
             }
             break;
@@ -169,9 +170,13 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position
 				u = get_reference_current(i);			// Read desired current
 				setCurrent(u);							// Set desired current
 				actual_pos = encoder_position();		// Read actual position	
-				buffer_write(actual_pos, u);			// Write data to buffer
+				//buffer_write(actual_pos, u);			// Write data to buffer
 				i++;
 			}
+		}
+		case FORCE_RECORD:
+		{
+			force_read();
 		}
     } 
  
