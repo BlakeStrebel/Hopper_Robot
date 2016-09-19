@@ -22,7 +22,6 @@ void force_sensor_init()
   SPI4CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
   SPI4CONbits.MSTEN = 1;    // master operation
   SPI4CONbits.ON = 1;       // turn on SPI4
-  
 }
 
 // send a byte via SPI and return the response
@@ -37,12 +36,8 @@ unsigned char SPI4_IO_F(unsigned char write)
 
 short adc_read(void)	// return force reading in counts
 {
-	//static char buffer[100];
 	static unsigned char TB1, RB1, RB2, RB3;
 	static short counts;
-/* 	static int moving_average = 0;
-	static int moving_sum = 0;
-	static int N = 8; */
 	
 	// configure adc to read bipolar differential voltage between Ch0 and Ch1
 	TB1 = 0b10000011;
@@ -58,34 +53,24 @@ short adc_read(void)	// return force reading in counts
  	
 	if (RB2 >> 6)
 	{
-	counts = -1 * ((~counts + 1 ) & 0x0FFF);	// implement two's compliment
+	counts = -1 * ((~counts + 1 ) & 0x0FFF);	// two's compliment
 	}
-/* 
-	moving_sum = moving_sum + counts - moving_sum/N;
-	moving_average = moving_sum/N;
-	
-	sprintf(buffer,"%d\r\n",moving_average);
-	NU32_WriteUART3(buffer);
-	 */
+
 	return counts;
 }
 
-int force_read(void)
+short force_read(void)
 {
-	static int N = 32,i;
-	int sum = 0, average = 0;
-	static char buffer[100];
+	static int N = 32;
+	static int i, sum, average; 
+	sum = 0; average = 0;
 	
-	for (i = 0; i < N; i++)
+	for (i = 0; i < N; i++)		// average N adc readings
 	{
 		sum += adc_read();
 	}
 	
 	average = sum/N;
-	sum = 0;
-	
-	sprintf(buffer,"%d\r\n",average);
-	NU32_WriteUART3(buffer);
 	
 	return average;
 }

@@ -8,13 +8,15 @@ PIC32 utalizes PID feedback control to control motor position.
 
 
 */
-
+void positioncontrol_setup(void);               	// Setup position control module
 void set_position_gains(void);                  	// Set position gains
 void get_position_gains(void);                  	// Get position gains
-void positioncontrol_setup(void);               	// Setup position control module
+void set_force_gains(void);							// Set force gains
+void get_force_gains(void);							// Get force gains
 void get_pos(void);                           		// Get desired position from client
 void reset_pos(void);								// Reset desired position to origin (0 um)
 void load_position_trajectory(void);                // Load desired position trajectory from client
-void load_current_trajectory(void);					// Load desired current trajectory from client 
-float PID_controller(int reference, int acutal);	// Calculates control
+void load_force_trajectory(void);					// Load desired current trajectory from client 
+float position_controller(int reference, int acutal);	// Calculates control
+float force_controller(short reference, short actual);
 #endif

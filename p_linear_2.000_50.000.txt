@@ -1,0 +1,8 @@
+16-Sep-2016
+mode = linear
+trajectory: [0.000, 1.000;2.000, 0.000;50.000, 0.000;]
+foot radius: 1"blower deceleration time = 20s
+Control loop: 2000Hz
+
+current(A)  position(mm)
+

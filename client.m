@@ -106,40 +106,17 @@ while ~has_quit
             position = position/1000;                               % Convert position to mm
             fprintf('The motor position is %.2f mm.\n',position);
         case 'i'
-            trajectory = input('Enter step trajectory, in sec and mm [time1, ang1; time2, ang2; ...]:\n');
             
-            ref = genRef_position(trajectory,'step');    % Generate step trajectory
-            ref = ref*1000;                              % Convert trajectory to um
+            ref = genRef_position(trajectory,mode);    % Generate step trajectory
+            ref = ref*1000;                            % Convert trajectory to um
           
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
             
             for i = 1:size(ref,2)                   % Send trajectory to PIC32
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
-        case 'j'
-            trajectory = input('Enter cubic trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:\n');
-            
-            ref = genRef_position(trajectory,'cubic');   % Generate cubic trajectory
-            ref = ref*1000;                              % Convert trajectory to um
-        
-            fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
-            
-            for i = 1:size(ref,2)                      % Send trajectory to PIC32
-               fprintf(NU32_Serial,'%f\n',ref(i)); 
-            end
-        case 'k'
-            trajectory = input('Enter linear trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:\n');
-            
-            ref = genRef_position(trajectory,'linear');   % Generate cubic trajectory
-            ref = ref*1000;                               % Convert trajectory to um
-                        
-            fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
-            
-            for i = 1:size(ref,2)                       % Send trajectory to PIC32
-               fprintf(NU32_Serial,'%f\n',ref(i)); 
-            end
         case 'l'
-            read_plot_matrix_position(NU32_Serial,1,ref) % Execute trajectory and plot results
+            read_plot_matrix_position(NU32_Serial,1,ref); % Execute trajectory and plot results
         case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
             fprintf(NU32_Serial,'%d\n',pos*1000);               % Convert mm -> um and send position to PIC32       
@@ -162,26 +139,28 @@ while ~has_quit
                 fprintf('%s = %d\n', STATUS{i},n);
             end
         case 't'
-            current = input('Enter desired motor current in amps: ');
-            fprintf(NU32_Serial,'%f\n',current); % Send desired current to PIC32
+            Fp = input('Enter your desired Fp position gain (A/N): ');     % Get Fp (A/N)
+            Fi = input('Enter your desired Fi position gain (A/(N*s): ');  % Get Fi (A/(N*s))
+            Fd = input('Enter your desired Fd position gain (A/(N/s): ');  % Get Fd (A/(N/s))
+            fprintf(NU32_Serial, '%f %f %f\n',[Fp*512/145,Fi*512/145,Fd*512/145]);   % Convert N -> counts and send gains to PIC32
         case 'u'
-            trajectory = input('Enter linear current trajectory, in sec and A [time1, current1; time2, current2; ...]:\n');
+            Fp = fscanf(NU32_Serial, '%f');    % Get Fp (A/counts)
+            Fi = fscanf(NU32_Serial, '%f');    % Get Fi (A/(counts*s))
+            Fd = fscanf(NU32_Serial, '%f');    % Get Fd (A/counts/s))
+        case 'v'
+            mode = input('Enter mode (''linear'', ''cubic'', or ''step''): ');
+            trajectory = input('Enter trajectory, in sec and N [time1, force1; time2, force2; ...]: ');
             
-            if trajectory(end,1) > 10 % Check that time is less than 10 seconds
-                fprintf('Error: maximum trajectory time is 10 seconds.\n')
-            else
-                ref = genRef_current(trajectory,'linear');   % Generate linear trajectory
-            end
-            
+            ref = genRef_position(trajectory,mode);   % Generate trajectory
+            ref = ref*512/145;                        % Convert N -> counts
+                        
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
             
-            for i = 1:size(ref,2)                      % Send trajectory to PIC32
+            for i = 1:size(ref,2)                       % Send trajectory to PIC32
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
-        case 'v'
-            read_plot_matrix_current(NU32_Serial,1);  % Execute trajectory and plot results
-        case 'x'
-            force_record(NU32_Serial);
+        case 'w'
+            read_plot_matrix_force(NU32_Serial,1,ref); % Execute trajectory and plot results
         case 'A'
             fprintf('Blower on\n');
         case 'B'

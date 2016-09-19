@@ -7,6 +7,7 @@
 #include "blower_dac.h"
 #include "blower.h"
 #include "positioncontrol.h"
+#include "force_sensor.h"
 
 
 #define BUF_SIZE 200
@@ -24,7 +25,7 @@ int main()
 	blower_dac_init();			// Setup CS pin for SPI4 communication
 	positioncontrol_setup();	// Setup control loop interrupt
 	force_sensor_init();		// Setup SPI4 for ADC communication	
-	//blowercontrol_setup();		// Setup blower on/off pin
+	blowercontrol_setup();		// Setup blower on/off pin
     __builtin_enable_interrupts();
     
     while(1)
@@ -134,33 +135,25 @@ int main()
 				status();
 				break;
 			}
-			case 't':	// Set motor current (A)
+			case 't':	// Set force gains
 			{
-				float n;
-				NU32_ReadUART3(buffer,BUF_SIZE);
-				setMODE(CURRENT_HOLD);
-				sscanf(buffer,"%f",&n);
-				setCurrent(n);
+				set_force_gains();
 				break;
 			}
-			case 'u':	// Load current trajectory
+			case 'u':	// Get force gains
 			{
-				load_current_trajectory();
+				get_force_gains();
 				break;
 			}
-			case 'v':	// Execute current trajectory
+			case 'v':	// Load force trajectory
 			{
-				setMODE(CURRENT_TRACK);	// Begin tracking
-				send_data();			// Send data to client as it becomes available	
+				load_force_trajectory();
 				break;
 			}
-			case 'w':
+			case 'w':	// Execute force trajectory
 			{
-				force_read();
-			}
-			case 'x':
-			{
-				setMODE(FORCE_RECORD);
+				setMODE(FORCE_TRACK);	// Begin tracking
+				send_data();			// Send data to client as it becomes available
 				break;
 			}
 			case 'A': // Blower on
