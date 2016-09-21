@@ -1,9 +1,8 @@
-function [heights,mean_height,std_heights] = acquire_image(filename)
+function [mean_height,heights,std_heights] = acquire_image(filename)
 %% configure webcam
 cam = webcam('Logitech');
 
 %% take snapshot
-figure;
 img = snapshot(cam);
 imwrite(img,filename,'bmp');
 clear('cam');
@@ -29,7 +28,7 @@ for i = xmin:(numColumns)
 end
 
 %% convert bed height to cm
-%heights = (658-heights).*(1/52);
+heights = (658-heights).*(1/52);
 
 %% plot bed heights
 figure;
