@@ -3,7 +3,7 @@ function position_experiment()
 %%
 trajectory = [0,0;1,50;2,0];
 mode = 'linear';
-filename = sprintf('p_%s_%.3f_%.3f.txt',mode,max(trajectory(:,1)),max(trajectory(:,2)));
+filename = 'test.txt';
 
 fileID = fopen(filename,'w');
 fprintf(fileID,'%s\r\n',datetime('today'));
@@ -28,7 +28,7 @@ end
 
 % configure ports
 XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',30);
-NU32_Serial = serial(NU32_port, 'BaudRate', 403200, 'FlowControl', 'hardware','Timeout',30); 
+NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',30); 
 
 fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 
@@ -39,13 +39,14 @@ fopen(XY_Serial);
 clean = onCleanup(@() cleanup(NU32_Serial,XY_Serial,fileID)); % close serial ports and turn off motors
 
 %%
-% startup the linear motor
-linmot_startup(NU32_Serial);
 
 % fluidize the bed
 frequency = 56;
 fluidize_bed(NU32_Serial,frequency, 10);
-pause(10);
+pause(8);
+
+% startup the linear motor
+linmot_startup(NU32_Serial);
 
 % startup the xy table
 grbl_startup(XY_Serial);
@@ -87,13 +88,13 @@ stepsy = 5;     % number of steps in y direction
 for i = 1:stepsx
    for j = 1:stepsy
         fprintf(NU32_Serial,'%c\n',plunge);              % tell PIC32 to plunge
-        data = read_plot_matrix_position(NU32_Serial,0,ref); % read data back from PIC32
+        data = read_plot_matrix_position(NU32_Serial,1); % read data back from PIC32
         %plot(times,data(:,2));                          % plot data
         
-%         fprintf(fileID,'\r\ntrial%d\r\n',i+j); 
-%         for ii = 1:size(data,1)         
-%             fprintf(fileID,'%f %f\r\n',data(ii,3),data(ii,2));  % write data to text file
-%         end
+        fprintf(fileID,'\r\ntrial%d\r\n',i+j); 
+        for ii = 1:size(data,1)         
+            fprintf(fileID,'%f %f\r\n',data(ii,3),data(ii,2));  % write data to text file
+        end
         
         return_to_origin(NU32_Serial);  % return motor to origin
         
@@ -104,7 +105,7 @@ for i = 1:stepsx
                 posy = posy - distance; % move position backward
             end
             grbl_moveY(XY_Serial,posy); % move table to target position  
-            pause(3);                 % wait 
+            pause(2.5);                 % wait 
         end
         
    end
@@ -112,7 +113,7 @@ for i = 1:stepsx
    if i ~= stepsx
         posx = posx + distance;     % move position forward
         grbl_moveX(XY_Serial,posx); % move table to target position
-        pause(4);                % wait
+        pause(3.25);                % wait
    end
 end
 
