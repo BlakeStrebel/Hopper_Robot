@@ -23,10 +23,13 @@ if nsamples > 1
     legend('position','motor force (N)','ATI force (N)')
     
     figure
+    hold on;
     plot(data(:,2),data(:,4));
-    title('Current vs Position');
+    plot(data(:,2),data(:,3));
+    title('Force vs Depth');
     xlabel('Depth (mm)');
     ylabel('Force (A)');
+    legend('Force sensor','Motor current');
     end
 else
     fprintf('Only 1 sample received\n')
