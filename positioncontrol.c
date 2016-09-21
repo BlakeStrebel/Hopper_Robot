@@ -140,7 +140,7 @@ float position_controller(int reference, int actual)  // Calculate control effor
     
     u = Kp*Enew + Ki*Eint + Kd*Edot;        // Calculate effort
         
-    if (u > 6)                           // Set max current (10 A)
+    if (u > 6)                           // Set max/min current
     {
         u = 6;
     }
@@ -156,17 +156,18 @@ float position_controller(int reference, int actual)  // Calculate control effor
 float force_controller(short reference, short actual) // Calculate control effort using feedforward model based on motor constant and PID force feedback
 {
 	static int  Enew, Eold = 0, Edot, Eint = 0;
-	static float u, Km = 0.0226; 
+	static float u; 
+	static float Km = 0.0226; // Motor constant in A/count
 	
-	Enew = reference - actual;
-	Eint = Eint + Enew;
-	Edot = Enew - Eold;
-	Eold = Enew;
+	Enew = reference - actual;	// Calculate error
+	Eint = Eint + Enew;			// Calculate integral error
+	Edot = Enew - Eold;			// Calculate derivative error
+	Eold = Enew;				// Update old error
 	
-	u = Km*reference + Fp*Enew + Fi*Eint + Fd*Edot;
+	u = Km*reference + Fp*Enew + Fi*Eint + Fd*Edot;	// Calculate effort
 	
 	
-	if (u > 6)
+	if (u > 6)			// Set max/min current
 	{
 		u = 6;
 	}
@@ -175,7 +176,7 @@ float force_controller(short reference, short actual) // Calculate control effor
 		u = -2;
 	}
 	
-	setCurrent(u);
+	setCurrent(u);	// Update DAC to set new current value
 	return (u);
 }
 
@@ -198,7 +199,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
             if (i == getN())    // Done tracking when index equals number of samples
             { 
 				i = 0;                  // Reset index
-                setMODE(POSITION_HOLD);          // Hold final position
+                setMODE(POSITION_HOLD); // Hold final position
             }
             else
             {
@@ -213,20 +214,20 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
         }
 		case FORCE_TRACK:
 		{
-			if (i == getN())
+			if (i == getN())	// Done tracking when index equals number of samples	
 			{
-				i = 0;
-				setCurrent(0);
-				setMODE(IDLE);
+				i = 0;			// Reset index
+				setCurrent(0);	// Reset current
+				setMODE(IDLE);	// Idle motor
 			}
 			else
 			{
-				desired_force = get_reference_force(i);
-				actual_force = force_read();
-				u = force_controller(desired_force, actual_force);
-				actual_pos = encoder_position();
-				buffer_write(actual_pos, u, actual_force);
-				i++;
+				desired_force = get_reference_force(i);		// Get desired force
+				actual_force = force_read();				// Read actual force
+				u = force_controller(desired_force, actual_force);	// Calculate effort
+				actual_pos = encoder_position();			// Read actual position	
+				buffer_write(actual_pos, u, actual_force);	// Write data to buffer
+				i++;										// Increment index 	
 			}
 			break;
 		}
