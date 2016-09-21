@@ -2,13 +2,13 @@ function ref = genRef_position(reflist, method)
 
 % This function takes a list of "via point" times and positions and generates a 
 % trajectory (positions as a function of time, in sample periods) using either
-% a step trajectory or cubic interpolation.
+% a step trajectory, linear trajecotry, or cubic interpolation.
 %
 %   ref = genRef(reflist, method)
 %
 %   Input Arguments:
 %       reflist: points on the trajectory
-%       method: either 'step' or 'cubic'
+%       method: either 'step' , 'linear', or 'cubic'
 %
 %   Output:
 %       An array ref, each element representing the reference position, in mm,
@@ -21,7 +21,7 @@ function ref = genRef_position(reflist, method)
 %   The via points are 0 mm at time 0 s; 90 mm at time 1 s;
 %   -45 mm at 1.5 s; and 0 mm at 2.5 s.
 % 
-%   Note:  the first time must be 0, and the first and last velocities should be 0.
+%   Note:  the first time must be 0.
 
 MOTOR_SERVO_RATE = 2000;    % 2000 Hz motion control loop
 dt = 1/MOTOR_SERVO_RATE;    % time per control cycle
