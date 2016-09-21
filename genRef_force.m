@@ -1,27 +1,27 @@
 function ref = genRef_force(reflist, method)
 
-% This function takes a list of "via point" times and positions and generates a 
-% trajectory (positions as a function of time, in sample periods) using either
-% a step trajectory or cubic interpolation.
+% This function takes a list of "via point" times and forces and generates a 
+% trajectory (forces as a function of time, in sample periods) using either
+% a step trajectory, linear trajectory, or cubic interpolation.
 %
 %   ref = genRef(reflist, method)
 %
 %   Input Arguments:
 %       reflist: points on the trajectory
-%       method: either 'step' or 'cubic'
+%       method: either 'step', 'linear', or 'cubic'
 %
 %   Output:
-%       An array ref, each element representing the reference position, in mm,
+%       An array ref, each element representing the reference force, in N,
 %       spaced at time 1/f, where f is the frequency of the trajectory controller.
 %       Also plots ref.
 %       
 %   Example usage:  ref = genRef([0, 0; 1.0, 90; 1.5, -45; 2.5, 0], 'cubic');
 %   Example usage:  ref = genRef([0, 0; 1.0, 90; 1.5, -45; 2.5, 0], 'step');
 %
-%   The via points are 0 mm at time 0 s; 90 mm at time 1 s;
-%   -45 mm at 1.5 s; and 0 mm at 2.5 s.
+%   The via points are 0 N at time 0 s; 90 N at time 1 s;
+%   -45 N at 1.5 s; and 0 N at 2.5 s.
 % 
-%   Note:  the first time must be 0, and the first and last velocities should be 0.
+%   Note:  the first time must be 0.
 
 MOTOR_SERVO_RATE = 2000;    % 2000 Hz motion control loop
 dt = 1/MOTOR_SERVO_RATE;    % time per control cycle
@@ -123,16 +123,6 @@ title(str);
 border = 0.1*(max(ref)-min(ref));
 axis([0, length(ref), min(ref)-border, max(ref)+border]);
 ylabel('Motor force (N)'); 
-xlabel('Sample number');
-set(gca,'FontSize',18);
-
-ref = ref *512/145;
-figure
-plot(ref);
-title(str);
-border = 0.1*(max(ref)-min(ref));
-axis([0, length(ref), min(ref)-border, max(ref)+border]);
-ylabel('Motor force (counts)'); 
 xlabel('Sample number');
 set(gca,'FontSize',18);
 
