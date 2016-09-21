@@ -4,9 +4,7 @@ nsamples = fscanf(mySerial,'%d');       % first get the number of samples being 
 data = zeros(nsamples,4);               % two values per sample:  ref and actual
 
 for i=1:nsamples
-
     data(i,1:3) = fscanf(mySerial,'%d %f %d'); % read in data from PIC32; position (um); current (amps); force (counts)
-
 end
 
 for i =1:nsamples
