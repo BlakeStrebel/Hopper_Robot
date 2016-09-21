@@ -6,11 +6,17 @@
 #include "encoder.h"
 #include "force_sensor.h"
 
-// PID control gains
+// PID position control gains
 static volatile float Kp = .00175;	// A/um
 static volatile float Ki = 0;		// A/(um*s)
 static volatile float Kd = .006;   	// A/(um/s)
-static volatile int desired_pos = 0, Eint=0, Eold=0;    
+static volatile int desired_pos = 0;    
+
+// PID force control gains
+static volatile float Fp = 0.055;	// A/count
+static volatile float Fi = 0;		// A/(count*s)
+static volatile float Fd = 0.046;	// A/(count/s)
+static volatile short desired_force = 0;
 
 void positioncontrol_setup(void)// setup position control module
 {
@@ -50,6 +56,30 @@ void get_position_gains(void)   // provide position control gains
     NU32_WriteUART3(buffer);
 }
 
+void set_force_gains(void)
+{
+	char buffer[100];
+    float Fptemp, Fitemp, Fdtemp;
+    NU32_ReadUART3(buffer,100);                              // Store gains in buffer
+    sscanf(buffer, "%f %f %f",&Fptemp, &Fitemp, &Fdtemp);   // Extract gains to temporary variables
+    __builtin_disable_interrupts();                         // Disable interrupts briefly
+    Fp = Fptemp;                                            // Set gains
+    Fi = Fitemp;
+    Fd = Fdtemp;
+    __builtin_enable_interrupts();                          // Reenable interrupts
+}
+
+void get_force_gains(void)
+{
+	char buffer[100];
+    sprintf(buffer, "%f\r\n",Fp);   // Extract gains to buffer 
+    NU32_WriteUART3(buffer);        // Send gains to client
+    sprintf(buffer, "%f\r\n",Fi);
+    NU32_WriteUART3(buffer);
+    sprintf(buffer, "%f\r\n",Fd);
+    NU32_WriteUART3(buffer);
+}
+
 void get_pos(void)            // Get desired position from client
 {
     char buffer [100]; int pos_temp;
@@ -58,8 +88,6 @@ void get_pos(void)            // Get desired position from client
     __builtin_disable_interrupts();     // Disable interrupts quickly
     desired_pos = pos_temp;         	// Set desired position  
     __builtin_enable_interrupts();      // Reenable interrupts
-    Eint = 0;                           // Reset PID error
-    Eold = 0;
 }
 
 void reset_pos(void)
@@ -84,10 +112,10 @@ void load_position_trajectory(void)      // Load trajectory for tracking
     }
 }
 
-void load_current_trajectory(void)      // Load trajectory for tracking
+void load_force_trajectory(void)      // Load trajectory for tracking
 {
     int i, n;
-	float data;
+	short data;
     char buffer[100];
     setN_client();      // Recieve number of samples from client
     n = getN();         // Determine number of samples
@@ -95,14 +123,14 @@ void load_current_trajectory(void)      // Load trajectory for tracking
     for (i = 0; i < n; i++)
     {
         NU32_ReadUART3(buffer,100);         // Read reference position from client
-        sscanf(buffer,"%f",&data);         	// Store position in data
-        write_reference_current(data, i);				// Write data to reference position array
+        sscanf(buffer,"%d",&data);         	// Store force in data
+        write_reference_force(data, i);		// Write data to reference position array
 	}
 }
 
-float PID_controller(int reference, int actual)  // Calculate control effort
+float position_controller(int reference, int actual)  // Calculate control effort using PID position feedback
 {
-    static int Enew, Edot;
+    static int Enew, Eold = 0, Edot, Eint = 0;
 	static float u;
  
     Enew = reference - actual;              // Calculate error
@@ -125,18 +153,44 @@ float PID_controller(int reference, int actual)  // Calculate control effort
 	return u;
 }
 
-
-void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position interrupt
+float force_controller(short reference, short actual) // Calculate control effort using feedforward model based on motor constant and PID force feedback
 {
-    static int actual_pos, actual_force, i = 0;
+	static int  Enew, Eold = 0, Edot, Eint = 0;
+	static float u, Km = 0.0226; 
+	
+	Enew = reference - actual;
+	Eint = Eint + Enew;
+	Edot = Enew - Eold;
+	Eold = Enew;
+	
+	u = Km*reference + Fp*Enew + Fi*Eint + Fd*Edot;
+	
+	
+	if (u > 6)
+	{
+		u = 6;
+	}
+	else if (u < -2)
+	{
+		u = -2;
+	}
+	
+	setCurrent(u);
+	return (u);
+}
+
+void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interrupt
+{
+    static int actual_pos, i = 0;
 	static float u;
+	static short actual_force;
     
     switch (getMODE())
     {
         case POSITION_HOLD:  // Hold desired position
         {
             actual_pos = encoder_position();              	// Read position from encoder
-            PID_controller(desired_pos, actual_pos);    	// Calculate control
+            position_controller(desired_pos, actual_pos);    	// Calculate control
             break;
         }
 		case POSITION_TRACK: // Track position trajectory
@@ -150,33 +204,31 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) PositionController(void)  // 2 kHz position
             {
                 desired_pos = get_reference_position(i);    	// Get desired position
                 actual_pos = encoder_position();          		// Read actual position
-				actual_force = adc_read();
-                u = PID_controller(desired_pos, actual_pos);	// Calculate effort
-				buffer_write(actual_pos,u, actual_force);						// Write data to buffer	
+                u = position_controller(desired_pos, actual_pos);	// Calculate effort
+				actual_force = force_read();					// Read actual force
+				buffer_write(actual_pos,u, actual_force);		// Write data to buffer	
                 i++;                                          	// Increment index
             }
             break;
         }
-		case CURRENT_TRACK: // Track current trajectory
+		case FORCE_TRACK:
 		{
 			if (i == getN())
 			{
-				i = 0;			// Reset index	
-				setCurrent(0);	// Stop current
+				i = 0;
+				setCurrent(0);
 				setMODE(IDLE);
 			}
 			else
 			{
-				u = get_reference_current(i);			// Read desired current
-				setCurrent(u);							// Set desired current
-				actual_pos = encoder_position();		// Read actual position	
-				//buffer_write(actual_pos, u);			// Write data to buffer
+				desired_force = get_reference_force(i);
+				actual_force = force_read();
+				u = force_controller(desired_force, actual_force);
+				actual_pos = encoder_position();
+				buffer_write(actual_pos, u, actual_force);
 				i++;
 			}
-		}
-		case FORCE_RECORD:
-		{
-			force_read();
+			break;
 		}
     } 
  
