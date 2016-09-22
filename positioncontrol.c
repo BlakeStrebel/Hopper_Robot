@@ -13,9 +13,9 @@ static volatile float Kd = .006;   	// A/(um/s)
 static volatile int desired_pos = 0;    
 
 // PID force control gains
-static volatile float Fp = 0.055;	// A/count
-static volatile float Fi = 0;		// A/(count*s)
-static volatile float Fd = 0.046;	// A/(count/s)
+static volatile float Fp = 0.035448;	// A/count
+static volatile float Fi = 0.00035448;		// A/(count*s)
+static volatile float Fd = 0.035448;	// A/(count/s)
 static volatile short desired_force = 0;
 
 void positioncontrol_setup(void)// setup position control module
@@ -155,16 +155,17 @@ float position_controller(int reference, int actual)  // Calculate control effor
 
 float force_controller(short reference, short actual) // Calculate control effort using feedforward model based on motor constant and PID force feedback
 {
-	static int  Enew, Eold = 0, Edot, Eint = 0;
+	static int  Enew = 0, Eold = 0, Edot, Eint = 0;
 	static float u; 
-	static float Km = 0.0226; // Motor constant in A/count
+	static float Km = 0.0226; 	 // Motor constant in A/count
+	static float friction = 0.4; // Aproximate friction
 	
 	Enew = reference - actual;	// Calculate error
 	Eint = Eint + Enew;			// Calculate integral error
 	Edot = Enew - Eold;			// Calculate derivative error
 	Eold = Enew;				// Update old error
 	
-	u = Km*reference + Fp*Enew + Fi*Eint + Fd*Edot;	// Calculate effort
+	u = friction + Km*reference + Fp*Enew + Fi*Eint + Fd*Edot;	// Calculate effort
 	
 	
 	if (u > 6)			// Set max/min current
