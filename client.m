@@ -145,12 +145,11 @@ while ~has_quit
             Fi = input('Enter your desired Fi position gain (A/(N*s): ');  % Get Fi (A/(N*s))
             Fd = input('Enter your desired Fd position gain (A/(N/s): ');  % Get Fd (A/(N/s))
             fprintf(NU32_Serial, '%f %f %f\n',[Fp*512/145,Fi*512/145,Fd*512/145]);   % Convert N -> counts and send gains to PIC32
-            fprintf('Sending Fp = %3.3f, Fi = %3.3f, and Fd = %3.3f.\n',Fp,Fi,Fd);
         case 'u'
             Fp = fscanf(NU32_Serial, '%f');    % Get Fp (A/counts)
             Fi = fscanf(NU32_Serial, '%f');    % Get Fi (A/(counts*s))
             Fd = fscanf(NU32_Serial, '%f');    % Get Fd (A/counts/s))
-            fprintf('The force controller is using Fp = %3.5f, Fi = %3.5f, and Fd = %3.5f.\n',[Fp,Fi,Fd]);%[Fp*145/512,Fi*145/512,Fd*145/512]);    % Convert counts -> N and print gains
+            fprintf('The force controller is using Fp = %3.5f, Fi = %3.5f, and Fd = %3.5f.\n',[Fp*145/512,Fi*145/512,Fd*145/512]);    % Convert counts -> N and print gains
         case 'v'
             mode = input('Enter mode (''linear'', ''cubic'', or ''step''): ');
             trajectory = input('Enter trajectory, in sec and N [time1, force1; time2, force2; ...]: ');

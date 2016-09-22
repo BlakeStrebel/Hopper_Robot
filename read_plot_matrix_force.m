@@ -27,11 +27,11 @@ if nsamples > 1
     xlabel('Time (ms)')
     legend('Motor current','ATI force', 'ref force')
     
-    figure
-    plot(data(:,1),data(:,3));
-    title('Force vs Position');
-    xlabel('Position (mm)');
-    ylabel('Force (N)');
+%     figure
+%     plot(data(:,1),data(:,3));
+%     title('Force vs Position');
+%     xlabel('Position (mm)');
+%     ylabel('Force (N)');
     end
 else
     fprintf('Only 1 sample received\n')
