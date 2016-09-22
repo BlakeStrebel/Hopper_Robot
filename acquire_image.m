@@ -1,4 +1,4 @@
-function [mean_height,heights,std_heights] = acquire_image(filename)
+function [mean_height,std_heights] = acquire_image(filename)
 %% configure webcam
 cam = webcam('Logitech');
 
