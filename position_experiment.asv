@@ -3,6 +3,8 @@ function position_experiment()
 
 numTrials = 10;
 trial = 1;
+foot_radius = 1
+blower_
 
 %% Configure serial communications
 
@@ -35,8 +37,7 @@ for trials = 1:numTrials
     filename = sprintf('trial%d.txt',trial);
     fileID = fopen(filename,'w');
     fprintf(fileID,'%s\r\n',datetime('today'));
-    fprintf(fileID,'foot radius: 1"');
-    fprintf(fileID,'blower deceleration time = 20s\r\n');
+
     
     %% Setup apparatus
     
@@ -55,13 +56,10 @@ for trials = 1:numTrials
     % determine bed height
     img_name = sprintf('trial%d',trial);
     height = acquire_image(img_name);
-    fprintf(fileID,'bed height = %f',height);
     
     % generate linear motor trajectory
     mode = 'linear';                % 'linear','cubic', or 'step' trajectory
     trajectory = [0,0;1,50;2,0];    % [t1,p1;t2,p2;t3,p3]
-    fprintf(fileID,'mode = %s\r\n',mode);
-    fprintf(fileID,'trajectory: [');fprintf(fileID,'%.3f, %.3f;',trajectory);fprintf(fileID,'%c]\r\n',8);
     
     fprintf('Generating trajectory ...\n');
     fprintf(NU32_Serial,'%c\n','i');            % tell PIC to load position trajectory
@@ -71,22 +69,27 @@ for trials = 1:numTrials
     for i = 1:size(ref,2)
         fprintf(NU32_Serial,'%f\n',ref(i));  % send trajectory to PIC32
     end
-
-    %% Perform intrusions and record data
-    fprintf(fileID,'ref pos(mm), act pos(mm), current(A), force(counts), table X(mm), table Y(mm)\r\n\r\n');
-    intrude = 'l';       % execute trajectory
+    
+    fprintf(fileID,'mode = %s\r\n',mode);
+    fprintf(fileID,'trajectory: [');fprintf(fileID,'%.3f, %.3f;',trajectory);fprintf(fileID,'%c]\r\n',8);
+    
+    %% Run experiment and record data
+    
+    plunge = 'l';       % execute trajectory
     
     posy = -1298;   % y coordinate
     posx = -399;    % x coordinate
     distance = 299; % movement distance
     stepsx = 2;     % number of steps in x direction
     stepsy = 5;     % number of steps in y direction
-   
+    
+    fprintf(fileID,'ref pos(mm), act pos(mm), current(A), force(counts), table X(mm), table Y(mm), foot radius(in), blower dec(s)\r\n\r\n');
     fprintf('Plunging motor ...\n');
+    
     for i = 1:stepsx
         for j = 1:stepsy
             % Perform trial
-            fprintf(NU32_Serial,'%c\n',intrude);                    % tell PIC32 to intrude
+            fprintf(NU32_Serial,'%c\n',plunge);                     % tell PIC32 to plunge
             data = read_plot_matrix_position(NU32_Serial,0,ref);    % read data back from PIC32
             return_to_origin(NU32_Serial);                          % return motor to origin
             
