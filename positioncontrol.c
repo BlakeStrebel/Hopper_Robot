@@ -158,14 +158,13 @@ float force_controller(short reference, short actual) // Calculate control effor
 	static int  Enew = 0, Eold = 0, Edot, Eint = 0;
 	static float u; 
 	static float Km = 0.0226; 	 // Motor constant in A/count
-	static float friction = 0.4; // Aproximate friction
 	
 	Enew = reference - actual;	// Calculate error
 	Eint = Eint + Enew;			// Calculate integral error
 	Edot = Enew - Eold;			// Calculate derivative error
 	Eold = Enew;				// Update old error
 	
-	u = friction + Km*reference + Fp*Enew + Fi*Eint + Fd*Edot;	// Calculate effort
+	u = Km*reference + Fp*Enew + Fi*Eint + Fd*Edot;	// Calculate effort
 	
 	
 	if (u > 6)			// Set max/min current
