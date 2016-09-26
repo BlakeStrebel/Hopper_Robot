@@ -8,9 +8,9 @@ imwrite(img,filename,'bmp');
 clear('cam');
 
 %% convert picture to grayscale
-figure;
+% figure;
 img_gray = rgb2gray(img(80:end,:,:));
-imshow(img_gray);
+% imshow(img_gray);
 
 %% find bed height
 numRows = size(img_gray,1);
@@ -31,11 +31,11 @@ end
 heights = (658-heights).*(1/52);
 
 %% plot bed heights
-figure;
-plot(xmin:numColumns,heights);
-xlabel('Column Number (pixels)');
-ylabel('Bed Height (cm)');
-title('Bed Height vs Column Number');
+% figure;
+% plot(xmin:numColumns,heights);
+% xlabel('Column Number (pixels)');
+% ylabel('Bed Height (cm)');
+% title('Bed Height vs Column Number');
 
 %% return mean and standard deviation
 mean_height = mean(heights);
