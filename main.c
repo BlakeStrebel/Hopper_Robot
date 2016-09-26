@@ -80,17 +80,7 @@ int main()
 				motor_home();
 				break;
 			}
-			case 'i':   // Load step trajectory
-            {
-                load_position_trajectory();
-                break;
-            }
-			case 'j':   // Load cubic trajectory
-            {
-                load_position_trajectory();
-                break;
-            }
-			case 'k':   // Load linear trajectory
+			case 'i':   // Load trajectory
             {
                 load_position_trajectory();
                 break;
