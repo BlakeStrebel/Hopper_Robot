@@ -5,12 +5,14 @@ cam = webcam('Logitech');
 %% take snapshot
 img = snapshot(cam);
 imwrite(img,filename,'bmp');
+figure;
+imshow(img)
 clear('cam');
 
 %% convert picture to grayscale
-% figure;
+figure;
 img_gray = rgb2gray(img(80:end,:,:));
-% imshow(img_gray);
+imshow(img_gray);
 
 %% find bed height
 numRows = size(img_gray,1);
@@ -28,7 +30,7 @@ for i = xmin:(numColumns)
 end
 
 %% convert bed height to cm
-heights = (658-heights).*(1/52);
+heights = (579-heights).*(1/52);
 
 %% plot bed heights
 % figure;
