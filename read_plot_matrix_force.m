@@ -19,7 +19,7 @@ if nsamples > 1
     if graph == 1
     figure
 
-    stairs(times,data(:,2:4));            % plot the reference and actual
+    stairs(times,data(:,1:4));            % plot the reference and actual
     % compute the average error
     score = mean(abs(data(:,4)-data(:,3)));
     title(sprintf('Avg error: %5.2f N',score))
