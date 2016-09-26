@@ -8,7 +8,7 @@ for i=1:nsamples
 end
 
 for i =1:nsamples
-    data(i,1) = data(i,1)/1000;                     % convert um -> mm
+    data(i,1) = data(i,1)/1000;                  % convert um -> mm
     data(i,2) = data(i,2)*12.5;                  % convert A -> N
     data(i,3) = data(i,3)*145/512;               % convert counts -> N
     data(i,4) = ref(i)*145/512;
@@ -25,7 +25,7 @@ if nsamples > 1
     title(sprintf('Avg error: %5.2f N',score))
     ylabel('Force (N)')
     xlabel('Time (ms)')
-    legend('Motor current','ATI force', 'ref force')
+    legend('position','Motor current','ATI force', 'ref force')
     
 %     figure
 %     plot(data(:,1),data(:,3));
