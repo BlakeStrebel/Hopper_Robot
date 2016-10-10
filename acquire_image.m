@@ -4,15 +4,11 @@ cam = webcam('Logitech');
 
 %% take snapshot
 img = snapshot(cam);
-imwrite(img,filename,'bmp');
-figure;
-imshow(img)
 clear('cam');
 
 %% convert picture to grayscale
-figure;
 img_gray = rgb2gray(img(80:end,:,:));
-imshow(img_gray);
+imwrite(img_gray,filename,'bmp');
 
 %% find bed height
 numRows = size(img_gray,1);

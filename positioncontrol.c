@@ -199,7 +199,8 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
             if (i == getN())    // Done tracking when index equals number of samples
             { 
 				i = 0;                  // Reset index
-                setMODE(POSITION_HOLD); // Hold final position
+				setCurrent(0);			// Reset current
+                setMODE(IDLE);			// Idle motor	
             }
             else
             {

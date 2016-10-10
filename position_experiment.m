@@ -1,8 +1,8 @@
 function position_experiment()
-% Runs experiment with fixed kinematics and records data
+% Runs position control experiment and records data
 
 numTrials = 10;
-trial = 1;
+filename = 'separation_200.mat';
 
 %% Configure serial communications
 
@@ -25,83 +25,98 @@ fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 fopen(NU32_Serial);
 fopen(XY_Serial);
 
-clean = onCleanup(@() cleanup(NU32_Serial,XY_Serial,fileID)); % close serial ports and turn off motors
+clean1 = onCleanup(@() cleanup(NU32_Serial,XY_Serial)); % close serial ports and turn off motors
+
+%% Configure data structure for data collection
+
+% Store metadata info in metadata struct
+experimental_data.metadata.date = datetime();
+experimental_data.metadata.foot_radius = 25.4; % mm
+experimental_data.metadata.deceleration_time = 10; % s
+experimental_data.metadata.control_frequency = 2000; % Hz
+
+%% Setup apparatus for experiment
+
+% startup the linear motor
+linmot_startup(NU32_Serial);
+
+% startup the xy table
+grbl_startup(XY_Serial);
+
+% generate linear motor trajectory
+fprintf('Loading trajectory ...\n');
+mode = 'linear';                % 'linear','cubic', or 'step' trajectory
+trajectory = [0,0;1.5,40;3,80];    % [t1,p1;t2,p2;t3,p3]
+
+fprintf(NU32_Serial,'%c\n','i');            % tell PIC to load position trajectory
+ref = genRef_position(trajectory,mode);     % generate trajectory
+ref = ref * 1000;                           % convert trajectory to um
+fprintf(NU32_Serial,'%d\n',size(ref,2));    % send number of samples to PIC32
+for i = 1:size(ref,2)
+    fprintf(NU32_Serial,'%f\n',ref(i));  % send trajectory to PIC32
+end
 
 %% experiment %%
 
-for trials = 1:numTrials
-    %% Configure data file
+for trial = 1:numTrials
     
-    filename = sprintf('trial%d.txt',trial);
-    fileID = fopen(filename,'w');
-    fprintf(fileID,'%s\r\n',datetime('today'));
-    fprintf(fileID,'foot radius: 1"');
-    fprintf(fileID,'blower deceleration time = 20s\r\n');
+    save(filename,'experimental_data'); % save file after every trial
     
-    %% Setup apparatus
+    %% Setup apparatus for trial
+    posy = -1100;   % y coordinate
+    posx = -300;    % x coordinate
+    return_to_origin(NU32_Serial);  % return motor to origin
+    grbl_home(XY_Serial);           % return table to home
     
-    % startup the linear motor
-    linmot_startup(NU32_Serial);
+%     % fluidize the bed
+%     frequency = 56;
+%     time = 10;
+%     fluidize_bed(NU32_Serial,frequency,time);
+%     pause(10);
     
-    % startup the xy table
-    grbl_startup(XY_Serial);
-    pause(3);
+    grbl_moveX(XY_Serial,posx);
+    grbl_moveY(XY_Serial,posy);
     
-    % fluidize the bed
-    frequency = 56;
-    fluidize_bed(NU32_Serial,frequency, 10);
-    pause(10);
+%     % determine bed height
+%     fprintf('Determining bed height\n');
+%     img_name = sprintf('trial%d.bmp',trial);
+%     bedheight = acquire_image(img_name);
+%     experimental_data.trials(trial).bedheight = bedheight;
     
-    % determine bed height
-    img_name = sprintf('trial%d',trial);
-    height = acquire_image(img_name);
-    fprintf(fileID,'bed height = %f',height);
-    
-    % generate linear motor trajectory
-    mode = 'linear';                % 'linear','cubic', or 'step' trajectory
-    trajectory = [0,0;1,50;2,0];    % [t1,p1;t2,p2;t3,p3]
-    fprintf(fileID,'mode = %s\r\n',mode);
-    fprintf(fileID,'trajectory: [');fprintf(fileID,'%.3f, %.3f;',trajectory);fprintf(fileID,'%c]\r\n',8);
-    
-    fprintf('Generating trajectory ...\n');
-    fprintf(NU32_Serial,'%c\n','i');            % tell PIC to load position trajectory
-    ref = genRef_position(trajectory,mode);     % generate trajectory
-    ref = ref * 1000;                           % convert trajectory to um
-    fprintf(NU32_Serial,'%d\n',size(ref,2));    % send number of samples to PIC32
-    for i = 1:size(ref,2)
-        fprintf(NU32_Serial,'%f\n',ref(i));  % send trajectory to PIC32
-    end
-
     %% Perform intrusions and record data
-    fprintf(fileID,'ref pos(mm), act pos(mm), current(A), force(counts), table X(mm), table Y(mm)\r\n\r\n');
-    intrude = 'l';       % execute trajectory
     
-    posy = -1298;   % y coordinate
-    posx = -399;    % x coordinate
-    distance = 299; % movement distance
+    intrude = 'l';       % execute trajectory
+    intrusion = 1;
+    step_size = 200; % movement distance
     stepsx = 2;     % number of steps in x direction
-    stepsy = 5;     % number of steps in y direction
-   
+    stepsy = 1;     % number of steps in y direction
+    
     fprintf('Plunging motor ...\n');
     for i = 1:stepsx
         for j = 1:stepsy
-            % Perform trial
+            % Perform intrusion
             fprintf(NU32_Serial,'%c\n',intrude);                    % tell PIC32 to intrude
             data = read_plot_matrix_position(NU32_Serial,0,ref);    % read data back from PIC32
+            pause(1);
             return_to_origin(NU32_Serial);                          % return motor to origin
             
-            % Write data to text file
-            fprintf(fileID,'\r\ntrial%d\r\n',i+j);
-            for ii = 1:size(data,1)
-                fprintf(fileID,'%f %f\r\n',data(ii,3),data(ii,2));
-            end
+            % Store data
+            experimental_data.trials(trial).intrusion(intrusion).sample_number = 1:size(data,1);
+            experimental_data.trials(trial).intrusion(intrusion).reference_position = data(:,1);
+            experimental_data.trials(trial).intrusion(intrusion).actual_position = data(:,2);
+            experimental_data.trials(trial).intrusion(intrusion).motor_current = data(:,3);
+            experimental_data.trials(trial).intrusion(intrusion).force = data(:,4);  
+            experimental_data.trials(trial).intrusion(intrusion).x_pos = posx;
+            experimental_data.trials(trial).intrusion(intrusion).y_pos = posy;
+            
+            intrusion=intrusion+1; % increment intrusion number
             
             % Move table
             if j ~= stepsy
                 if mod(i,2) == 1
-                    posy = posy + distance; % move position forward
+                    posy = posy + step_size; % move position forward
                 else
-                    posy = posy - distance; % move position backward
+                    posy = posy - step_size; % move position backward
                 end
                 grbl_moveY(XY_Serial,posy); % move table to target position
                 pause(3);                 % wait
@@ -109,14 +124,16 @@ for trials = 1:numTrials
         end
         
         if i ~= stepsx
-            posx = posx + distance;     % move position forward
+            posx = posx + step_size;     % move position forward
             grbl_moveX(XY_Serial,posx); % move table to target position
             pause(4);                % wait
         end
     end
     
-    fprintf('Trial complete\n');
+    fprintf('Trial %d complete\n',trial);
 
 end
+
+save(filename,'experimental_data');
 
 end

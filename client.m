@@ -18,7 +18,7 @@ fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 
 % opens serial connection
 fopen(NU32_Serial);
-fopen(XY_Serial);
+%fopen(XY_Serial);
 
 % closes serial port when function exits
 clean1 = onCleanup(@()fclose(NU32_Serial));
