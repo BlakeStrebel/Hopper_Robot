@@ -7,7 +7,7 @@ Maintains variable holding operating mode and arrays to hold position/force data
 Motor data is sent to client in real-time utalizing a circular buffer data structure.
 
 */
-
+#define DECIMATION 2
 #define REFERENCE_DATA 14000	// Reference data for trajectory tracking	
 #define BUFLEN 1024		// Actual data; sent to client using circular buffer
 

@@ -3,6 +3,7 @@ function position_experiment()
 
 numTrials = 10;
 filename = 'separation_200.mat';
+DECIMATION = 2;
 
 %% Configure serial communications
 
@@ -34,6 +35,7 @@ experimental_data.metadata.date = datetime();
 experimental_data.metadata.foot_radius = 25.4; % mm
 experimental_data.metadata.deceleration_time = 10; % s
 experimental_data.metadata.control_frequency = 2000; % Hz
+experimental_data.metadata.sampling_rate = 1000; % Hz
 
 %% Setup apparatus for experiment
 
@@ -96,7 +98,7 @@ for trial = 1:numTrials
         for j = 1:stepsy
             % Perform intrusion
             fprintf(NU32_Serial,'%c\n',intrude);                    % tell PIC32 to intrude
-            data = read_plot_matrix_position(NU32_Serial,0,ref);    % read data back from PIC32
+            data = read_plot_matrix_position(NU32_Serial,0,ref(1:DECIMATION:end));    % read data back from PIC32
             pause(1);
             return_to_origin(NU32_Serial);                          % return motor to origin
             

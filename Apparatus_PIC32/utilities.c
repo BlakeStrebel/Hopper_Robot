@@ -93,10 +93,10 @@ void send_data(void)
 {
 	int sent = 0;
 	char msg[100];
-	sprintf(msg, "%d\r\n",getN());	// tell the client how many samples to expect
+	sprintf(msg, "%d\r\n",getN()/DECIMATION);	// tell the client how many samples to expect
 	NU32_WriteUART3(msg);
 	
-	for(sent = 0; sent < N; ++sent) { // send the samples to the client
+	for(sent = 0; sent < (N/DECIMATION); ++sent) { // send the samples to the client
 		while(buffer_empty()) { ; }             								// wait for data to be in the queue
 		sprintf(msg,"%d %f %hi\r\n",buffer_read_position(),buffer_read_current(),buffer_read_force());  // read from buffer 
 		NU32_WriteUART3(msg);													// send data over uart

@@ -185,6 +185,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
     static int actual_pos, i = 0;
 	static float u;
 	static short actual_force;
+	static int decctr = 0;	// counts to store data one every DECIMATION
     
     switch (getMODE())
     {
@@ -207,8 +208,14 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
                 desired_pos = get_reference_position(i);    	// Get desired position
                 actual_pos = encoder_position();          		// Read actual position
                 u = position_controller(desired_pos, actual_pos);	// Calculate effort
-				actual_force = force_read();					// Read actual force
-				buffer_write(actual_pos,u, actual_force);		// Write data to buffer	
+				
+				decctr++;
+				if (decctr == DECIMATION) {
+					actual_force = force_read();					// Read actual force
+					buffer_write(actual_pos,u, actual_force);		// Write data to buffer	
+					decctr = 0;	// reset DECIMATION counter
+				}
+				
                 i++;                                          	// Increment index
             }
             break;
