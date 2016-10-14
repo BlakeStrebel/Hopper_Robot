@@ -2,9 +2,7 @@ function position_experiment()
 % Runs position control experiment and records data
 
 numTrials = 10;
-filename = 'heights.mat';
-DECIMATION = 2;
-trajectory = [0,0;.5,40;1,80];    % [t1,p1;t2,p2;t3,p3]
+filename = 'separation_200.mat';
 
 %% Configure serial communications
 
@@ -36,7 +34,6 @@ experimental_data.metadata.date = datetime();
 experimental_data.metadata.foot_radius = 25.4; % mm
 experimental_data.metadata.deceleration_time = 10; % s
 experimental_data.metadata.control_frequency = 2000; % Hz
-experimental_data.metadata.sampling_rate = 1000; % Hz
 
 %% Setup apparatus for experiment
 
@@ -49,7 +46,7 @@ grbl_startup(XY_Serial);
 % generate linear motor trajectory
 fprintf('Loading trajectory ...\n');
 mode = 'linear';                % 'linear','cubic', or 'step' trajectory
-
+trajectory = [0,0;1.5,40;3,80];    % [t1,p1;t2,p2;t3,p3]
 
 fprintf(NU32_Serial,'%c\n','i');            % tell PIC to load position trajectory
 ref = genRef_position(trajectory,mode);     % generate trajectory
@@ -71,20 +68,20 @@ for trial = 1:numTrials
     return_to_origin(NU32_Serial);  % return motor to origin
     grbl_home(XY_Serial);           % return table to home
     
-    % fluidize the bed
-    frequency = 56;
-    time = 10;
-    fluidize_bed(NU32_Serial,frequency,time);
-    pause(10);
+%     % fluidize the bed
+%     frequency = 56;
+%     time = 10;
+%     fluidize_bed(NU32_Serial,frequency,time);
+%     pause(10);
     
     grbl_moveX(XY_Serial,posx);
     grbl_moveY(XY_Serial,posy);
     
-    % determine bed height
-    fprintf('Determining bed height\n');
-    img_name = sprintf('trial%d.bmp',trial);
-    bedheight = acquire_image(img_name);
-    experimental_data.trials(trial).bedheight = bedheight;
+%     % determine bed height
+%     fprintf('Determining bed height\n');
+%     img_name = sprintf('trial%d.bmp',trial);
+%     bedheight = acquire_image(img_name);
+%     experimental_data.trials(trial).bedheight = bedheight;
     
     %% Perform intrusions and record data
     
@@ -99,7 +96,7 @@ for trial = 1:numTrials
         for j = 1:stepsy
             % Perform intrusion
             fprintf(NU32_Serial,'%c\n',intrude);                    % tell PIC32 to intrude
-            data = read_plot_matrix_position(NU32_Serial,0,ref(1:DECIMATION:end));    % read data back from PIC32
+            data = read_plot_matrix_position(NU32_Serial,0,ref);    % read data back from PIC32
             pause(1);
             return_to_origin(NU32_Serial);                          % return motor to origin
             

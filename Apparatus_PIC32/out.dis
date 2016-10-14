@@ -3233,7 +3233,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
 	static float u;
 	static short actual_force;
 	static int decctr = 0;	// counts to store data one every DECIMATION
-    
+
     switch (getMODE())
 9d00435c:	0f401fd7 	jal	9d007f5c <getMODE>
 9d004360:	00000000 	nop

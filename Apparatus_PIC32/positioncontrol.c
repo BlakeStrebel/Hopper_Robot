@@ -186,7 +186,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
 	static float u;
 	static short actual_force;
 	static int decctr = 0;	// counts to store data one every DECIMATION
-    
+
     switch (getMODE())
     {
         case POSITION_HOLD:  // Hold desired position
