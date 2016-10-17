@@ -170,6 +170,13 @@ while ~has_quit
             frequency = input('Enter desired blower frequency in Hz: ');
             fprintf(NU32_Serial,'%f\n',frequency);
             fprintf('Setting blower frequency to %f Hz\n',frequency);
+        case 'F'
+            forces = fscanf(NU32_Serial,'%d %d %d');
+            forces(1) = forces(1) * 145/512;
+            forces(2:3) = forces(2:3) * 10/2048;
+            forces
+            
+        
         case '1'
             fgets(XY_Serial);   % Clear startup text in serial input
             buffer = fgets(XY_Serial);
