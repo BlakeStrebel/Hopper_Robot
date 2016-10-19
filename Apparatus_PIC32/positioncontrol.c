@@ -13,10 +13,13 @@ static volatile float Kd = .006;   	// A/(um/s)
 static volatile int desired_pos = 0;    
 
 // PID force control gains
-static volatile float Fp = 0.035448;	// A/count
-static volatile float Fi = 0.00035448;		// A/(count*s)
-static volatile float Fd = 0.035448;	// A/(count/s)
+static volatile float Fp = 0.017655;	// A/count
+static volatile float Fi = 0.003531;		// A/(count*s)
+static volatile float Fd = 0;	// A/(count/s)
 static volatile short desired_force = 0;
+
+static volatile control_error P; // position control error
+static volatile control_error F; // force control error
 
 void positioncontrol_setup(void)// setup position control module
 {
@@ -128,17 +131,28 @@ void load_force_trajectory(void)      // Load trajectory for tracking
 	}
 }
 
+void reset_controller_error(void)
+{
+	P.Enew = 0;
+	P.Eold = 0;
+	P.Eint = 0;
+	P.Edot = 0;
+	F.Enew = 0;
+	F.Eold = 0;
+	F.Eint = 0;
+	F.Edot = 0;
+}
+
 float position_controller(int reference, int actual)  // Calculate control effort using PID position feedback
 {
-    static int Enew, Eold = 0, Edot, Eint = 0;
 	static float u;
  
-    Enew = reference - actual;              // Calculate error
-    Eint = Eint + Enew;                     // Calculate intergral error
-    Edot = Enew - Eold;                     // Calculate derivative error
-    Eold = Enew;                            // Update old error
+    P.Enew = reference - actual;              // Calculate error
+    P.Eint = P.Eint + P.Enew;                     // Calculate intergral error
+    P.Edot = P.Enew - P.Eold;                     // Calculate derivative error
+    P.Eold = P.Enew;                            // Update old error
     
-    u = Kp*Enew + Ki*Eint + Kd*Edot;        // Calculate effort
+    u = Kp*P.Enew + Ki*P.Eint + Kd*P.Edot;        // Calculate effort
         
     if (u > 6)                           // Set max/min current
     {
@@ -155,16 +169,15 @@ float position_controller(int reference, int actual)  // Calculate control effor
 
 float force_controller(short reference, short actual) // Calculate control effort using feedforward model based on motor constant and PID force feedback
 {
-	static int  Enew = 0, Eold = 0, Edot, Eint = 0;
 	static float u; 
-	static float Km = 0.0226; 	 // Motor constant in A/count
+	static float Km = 0; 	 // Motor constant in A/count
 	
-	Enew = reference - actual;	// Calculate error
-	Eint = Eint + Enew;			// Calculate integral error
-	Edot = Enew - Eold;			// Calculate derivative error
-	Eold = Enew;				// Update old error
+	F.Enew = reference - actual;	// Calculate error
+	F.Eint = F.Eint + F.Enew;			// Calculate integral error
+	F.Edot = F.Enew - F.Eold;			// Calculate derivative error
+	F.Eold = F.Enew;				// Update old error
 	
-	u = Km*reference + Fp*Enew + Fi*Eint + Fd*Edot;	// Calculate effort
+	u = Km*reference + Fp*F.Enew + Fi*F.Eint + Fd*F.Edot;	// Calculate effort
 	
 	
 	if (u > 6)			// Set max/min current
