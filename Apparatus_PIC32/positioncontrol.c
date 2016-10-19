@@ -124,7 +124,7 @@ void load_force_trajectory(void)      // Load trajectory for tracking
     {
         NU32_ReadUART3(buffer,100);         // Read reference position from client
         sscanf(buffer,"%d",&data);         	// Store force in data
-        write_reference_force(data, i);		// Write data to reference position array
+        write_reference_Fz(data, i);		// Write data to reference position array
 	}
 }
 
@@ -184,7 +184,7 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
 {
     static int actual_pos, i = 0;
 	static float u;
-	static short actual_force;
+	static short Fz, Tx, Ty;
 	static int decctr = 0;	// counts to store data one every DECIMATION
 
     switch (getMODE())
@@ -211,8 +211,10 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
 				
 				decctr++;
 				if (decctr == DECIMATION) {
-					actual_force = force_read(GET_FZ);					// Read actual force
-					buffer_write(actual_pos,u, actual_force);		// Write data to buffer	
+					Fz = force_read(GET_FZ);				// Read actual force
+					Tx = force_read(GET_TX);
+					Ty = force_read(GET_TY);
+					buffer_write(actual_pos,u, Fz, Tx, Ty);		// Write data to buffer	
 					decctr = 0;	// reset DECIMATION counter
 				}
 				
@@ -230,12 +232,20 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
 			}
 			else
 			{
-				desired_force = get_reference_force(i);		// Get desired force
-				actual_force = force_read(GET_FZ);				// Read actual force
-				u = force_controller(desired_force, actual_force);	// Calculate effort
-				actual_pos = encoder_position();			// Read actual position	
-				buffer_write(actual_pos, u, actual_force);	// Write data to buffer
-				i++;										// Increment index 	
+				desired_force = get_reference_Fz(i);		// Get desired force
+				Fz = force_read(GET_FZ);					// Read actual force
+				u = force_controller(desired_force, Fz);	// Calculate effort
+				
+				decctr++;
+				if (decctr == DECIMATION) {
+					actual_pos = encoder_position();			// Read actual position	
+					Tx = force_read(GET_TX);
+					Ty = force_read(GET_TY);
+					buffer_write(actual_pos, u, Fz, Tx, Ty);	// Write data to buffer
+					decctr = 0;
+				}	
+			
+			i++;										// Increment index				
 			}
 			break;
 		}

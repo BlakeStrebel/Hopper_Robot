@@ -37,14 +37,14 @@ int get_reference_position(int index)           		// Return reference position t
 	return DATA.position_reference[index];
 }
 
-void write_reference_force(short force, int index)
+void write_reference_Fz(short force, int index)
 {
-	DATA.force_reference[index] = force;
+	DATA.Fz_reference[index] = force;
 }
 
-short get_reference_force(int index)
+short get_reference_Fz(int index)
 {
-	return DATA.force_reference[index];
+	return DATA.Fz_reference[index];
 }
 
 int buffer_empty() {    // return true if the buffer is empty (read = write)
@@ -65,9 +65,19 @@ float buffer_read_current() {	// reads current from current buffer location; ass
 	return current;
 }
 
-int buffer_read_force() {
-	int force = DATA.force_actual[read];
+short buffer_read_Fz() {
+	short force = DATA.Fz_actual[read];
 	return force;
+}
+
+short buffer_read_Tx() {
+	short torque = DATA.Tx_actual[read];
+	return torque;
+}
+
+short buffer_read_Ty() {
+	short torque = DATA.Ty_actual[read];
+	return torque;
 }
 
 void buffer_read_increment() {	// increment the buffer read location
@@ -77,11 +87,13 @@ void buffer_read_increment() {	// increment the buffer read location
 	}
 }
 
-void buffer_write(int actual_position, float actual_current, short actual_force) { 	// write data to buffer
+void buffer_write(int actual_position, float actual_current, short actual_Fz, short actual_Tx, short actual_Ty) { 	// write data to buffer
   if(!buffer_full()) {        // if the buffer is full the data is lost
     DATA.position_actual[write] = actual_position;	// write motor position to buffer
 	DATA.current_actual[write] = actual_current;	// write motor current to buffer
-	DATA.force_actual[write] = actual_force;		// write force to buffer
+	DATA.Fz_actual[write] = actual_Fz;		// write force to buffer
+	DATA.Tx_actual[write] = actual_Tx;
+	DATA.Ty_actual[write] = actual_Ty;
     ++write;                  // increment the write index and wrap around if necessary
     if(write >= BUFLEN) {
       write = 0;
@@ -92,13 +104,13 @@ void buffer_write(int actual_position, float actual_current, short actual_force)
 void send_data(void)
 {
 	int sent = 0;
-	char msg[100];
+	char msg[75];
 	sprintf(msg, "%d\r\n",getN()/DECIMATION);	// tell the client how many samples to expect
 	NU32_WriteUART3(msg);
 	
 	for(sent = 0; sent < (N/DECIMATION); ++sent) { // send the samples to the client
 		while(buffer_empty()) { ; }             								// wait for data to be in the queue
-		sprintf(msg,"%d %f %hi\r\n",buffer_read_position(),buffer_read_current(),buffer_read_force());  // read from buffer 
+		sprintf(msg,"%d %f %hi %hi %hi\r\n",buffer_read_position(),buffer_read_current(),buffer_read_Fz(),buffer_read_Tx(),buffer_read_Ty());  // read from buffer 
 		NU32_WriteUART3(msg);													// send data over uart
 		buffer_read_increment();												// increment buffer read index
   }

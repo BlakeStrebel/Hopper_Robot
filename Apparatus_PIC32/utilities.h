@@ -16,8 +16,10 @@ typedef enum {IDLE, HOMING, POSITION_HOLD, POSITION_TRACK, FORCE_TRACK} mode;   
 typedef struct {                          // Define data structure containing control data
     int position_reference[REFERENCE_DATA];
     int position_actual[BUFLEN];
-	short force_reference[REFERENCE_DATA];
-	short force_actual[BUFLEN];
+	short Fz_reference[REFERENCE_DATA];
+	short Fz_actual[BUFLEN];
+	short Tx_actual[BUFLEN];
+	short Ty_actual[BUFLEN];
 	float current_actual[BUFLEN];
 } control_data_t;
 
@@ -32,17 +34,19 @@ int getN(void);                                    			// Returns number N of sam
 // REFERENCE DATA                                                            
 void write_reference_position(int position, int index);  	// Write reference position
 int get_reference_position(int index);                  	// Get reference position
-void  write_reference_force(short force, int index);	// Write reference current	
-short get_reference_force(int index);						// Get reference current
+void  write_reference_Fz(short force, int index);	// Write reference current	
+short get_reference_Fz(int index);						// Get reference current
 
 // ACTUAL DATA
 int buffer_empty();				// return true if the buffer is empty (read = write)
 int buffer_full();				// return true if the buffer is full.
 int buffer_read_position();		// reads position from current buffer location; assumes buffer not empty
 float buffer_read_current();	// reads current from current buffer location; assumes buffer not empty
-int buffer_read_force();
+short buffer_read_Fz();
+short buffer_read_Tx();
+short buffer_read_Ty();
 void buffer_read_increment();	// increments buffer read index
-void buffer_write(int actual_position, float actual_current, short actual_force);	// write data to buffer
+void buffer_write(int actual_position, float actual_current, short actual_Fz, short Tx, short Ty);	// write data to buffer
 void send_data(void);			// send data to client as it becomes available
 
 
