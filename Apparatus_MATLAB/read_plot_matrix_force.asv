@@ -19,19 +19,19 @@ if nsamples > 1
     if graph == 1
     figure
 
-    stairs(times,data(:,[1, 2, 3, 6]));            % plot the reference and actual
+    stairs(times,data(:,[1, 2, 3));            % plot the reference and actual
     % compute the average error
-    score = mean(abs(data(:,6)-data(:,3)));
+    score = mean(abs(data(:,4)-data(:,3)));
     title(sprintf('Avg error: %5.2f N',score))
     ylabel('Force (N)')
     xlabel('Time (ms)')
     legend('position','Motor current','ATI force', 'ref force')
     
-    figure
-    plot(data(:,1),data(:,3));
-    title('Force vs Position');
-    xlabel('Position (mm)');
-    ylabel('Force (N)');
+%     figure
+%     plot(data(:,1),data(:,3));
+%     title('Force vs Position');
+%     xlabel('Position (mm)');
+%     ylabel('Force (N)');
     end
 else
     fprintf('Only 1 sample received\n')

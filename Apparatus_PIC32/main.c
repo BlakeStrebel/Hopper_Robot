@@ -26,6 +26,7 @@ int main()
 	positioncontrol_setup();	// Setup control loop interrupt
 	force_sensor_init();		// Setup SPI4 for ADC communication	
 	blowercontrol_setup();		// Setup blower on/off pin
+	reset_controller_error();	// Set controller error to zero
     __builtin_enable_interrupts();
     
     while(1)
@@ -87,6 +88,7 @@ int main()
             }
 			case 'l':   // Execute position trajectory
             {
+				reset_controller_error();	// Set controller error to zero
                 setMODE(POSITION_TRACK);	// Begin tracking
 				send_data();				// Send data to client as it becomes available
                 break;
@@ -142,6 +144,7 @@ int main()
 			}
 			case 'w':	// Execute force trajectory
 			{
+				reset_controller_error();	// Set controller error to zero
 				setMODE(FORCE_TRACK);	// Begin tracking
 				send_data();			// Send data to client as it becomes available
 				break;

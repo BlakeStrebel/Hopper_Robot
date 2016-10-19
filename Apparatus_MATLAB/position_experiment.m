@@ -36,6 +36,7 @@ experimental_data.metadata.date = datetime();
 experimental_data.metadata.foot_radius = 25.4; % mm
 experimental_data.metadata.deceleration_time = 10; % s
 experimental_data.metadata.control_frequency = 2000; % Hz
+experimental_data.metadata.sampling_frequency = 1000; % Hz
 
 %% Setup apparatus for experiment
 
@@ -73,7 +74,7 @@ for trial = 1:numTrials
     pause(10);
     
     % move table to initial position
-    posy = 100;   % y coordinate
+    posy = 300;   % y coordinate
     posx = 100;    % x coordinate
     grbl_moveX(XY_Serial,posx);
     grbl_moveY(XY_Serial,posy);
@@ -94,7 +95,7 @@ for trial = 1:numTrials
     
     step_size = 200; % movement distance
     stepsx = 2;      % number of steps in x direction
-    stepsy = 1;      % number of steps in y direction
+    stepsy = 3;      % number of steps in y direction
     
     fprintf('Plunging motor ...\n');
     for i = 1:stepsx
@@ -126,7 +127,7 @@ for trial = 1:numTrials
                 pause(3);                   % wait
             end
             
-            intrusion =+ 1; % increment intrusion number
+            intrusion = intrusion + 1; % increment intrusion number
             
         end
         

@@ -116,7 +116,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
-            data = read_plot_matrix_position(NU32_Serial,0,ref(1:DECIMATION:end)) % Execute trajectory and plot results
+            read_plot_matrix_position(NU32_Serial,0,ref(1:DECIMATION:end)); % Execute trajectory and plot results
         case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
             fprintf(NU32_Serial,'%d\n',pos*1000);               % Convert mm -> um and send position to PIC32       
@@ -161,7 +161,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'w'
-            read_plot_matrix_force(NU32_Serial,1,ref); % Execute trajectory and plot results
+            read_plot_matrix_force(NU32_Serial,1,ref(1:DECIMATION:end)); % Execute trajectory and plot results
         case 'A'
             fprintf('Blower on\n');
         case 'B'
@@ -175,8 +175,6 @@ while ~has_quit
             forces(1) = forces(1) * 145/512;
             forces(2:3) = forces(2:3) * 10/2048;
             forces
-            
-        
         case '1'
             fgets(XY_Serial);   % Clear startup text in serial input
             buffer = fgets(XY_Serial);
