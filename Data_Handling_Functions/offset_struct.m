@@ -1,6 +1,6 @@
 function offset_experimental_data = offset_struct(experimental_data)
 
-num_intrusions = 21;
+num_intrusions = 6;
 num_trials = 10;
 
 % Offset everything
