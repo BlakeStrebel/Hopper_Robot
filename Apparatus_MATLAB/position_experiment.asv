@@ -4,7 +4,8 @@ function position_experiment()
 numTrials = 10;
 filename = 'edges.mat';
 trajectory = [0,0;.5,40;1,80];    % [t1,p1;t2,p2;t3,p3]
-mode = 'linear';                  % 'linear','cubic', or 'step' trajectory
+mode = 'linear';                % 'linear','cubic', or 'step' trajectory
+DECIMATION = 2;
 
 %% Configure serial communications
 
@@ -48,6 +49,8 @@ grbl_startup(XY_Serial);
 % generate linear motor trajectory
 fprintf('Loading trajectory ...\n');
 
+
+
 fprintf(NU32_Serial,'%c\n','i');            % tell PIC to load position trajectory
 ref = genRef_position(trajectory,mode);     % generate trajectory
 ref = ref * 1000;                           % convert trajectory to um
@@ -73,8 +76,8 @@ for trial = 1:numTrials
     pause(10);
     
     % move table to initial position
-    posy = 100;   % y coordinate
-    posx = 100;    % x coordinate
+    posy = -1100;   % y coordinate
+    posx = -300;    % x coordinate
     grbl_moveX(XY_Serial,posx);
     grbl_moveY(XY_Serial,posy);
     
@@ -86,34 +89,32 @@ for trial = 1:numTrials
     
     %% Perform intrusions and record data
     
-    DECIMATION = 2; % sample rate = control rate / DECIMATION (needs to match value on PIC32)
-    
     intrude = 'l';       % execute trajectory
-    intrusion = 1;       % counter
-    
+    intrusion = 1;
     
     step_size = 200; % movement distance
-    stepsx = 2;      % number of steps in x direction
-    stepsy = 1;      % number of steps in y direction
+    stepsx = 2;     % number of steps in x direction
+    stepsy = 1;     % number of steps in y direction
     
     fprintf('Plunging motor ...\n');
     for i = 1:stepsx
         for j = 1:stepsy
             % Perform intrusion
-            fprintf(NU32_Serial,'%c\n',intrude);                                      % tell PIC32 to intrude
+            fprintf(NU32_Serial,'%c\n',intrude);                    % tell PIC32 to intrude
             data = read_plot_matrix_position(NU32_Serial,0,ref(1:DECIMATION:end));    % read data back from PIC32
-            return_to_origin(NU32_Serial);                                            % return motor to origin
+            pause(1);
+            return_to_origin(NU32_Serial);                          % return motor to origin
             
             % Store data
             experimental_data.trials(trial).intrusion(intrusion).sample_number = 1:size(data,1);
             experimental_data.trials(trial).intrusion(intrusion).reference_position = data(:,1);
             experimental_data.trials(trial).intrusion(intrusion).actual_position = data(:,2);
             experimental_data.trials(trial).intrusion(intrusion).motor_current = data(:,3);
-            experimental_data.trials(trial).intrusion(intrusion).Fz = data(:,4);
-            experimental_data.trials(trial).intrusion(intrusion).Tx = data(:,5);
-            experimental_data.trials(trial).intrusion(intrusion).Ty = data(:,6);
+            experimental_data.trials(trial).intrusion(intrusion).force = data(:,4);  
             experimental_data.trials(trial).intrusion(intrusion).x_pos = posx;
             experimental_data.trials(trial).intrusion(intrusion).y_pos = posy;
+            
+            intrusion=intrusion+1; % increment intrusion number
             
             % Move table
             if j ~= stepsy
@@ -123,17 +124,14 @@ for trial = 1:numTrials
                     posy = posy - step_size; % move position backward
                 end
                 grbl_moveY(XY_Serial,posy); % move table to target position
-                pause(3);                   % wait
+                pause(3);                 % wait
             end
-            
-            intrusion =+ 1; % increment intrusion number
-            
         end
         
         if i ~= stepsx
-            posx = posx + step_size;    % move position forward
+            posx = posx + step_size;     % move position forward
             grbl_moveX(XY_Serial,posx); % move table to target position
-            pause(4);                   % wait
+            pause(4);                % wait
         end
     end
     

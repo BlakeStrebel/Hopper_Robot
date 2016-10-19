@@ -34,16 +34,13 @@ unsigned char SPI4_IO_F(unsigned char write)
     return SPI4BUF;
 }
 
-short adc_read(void)	// return force reading in counts
+short adc_read(unsigned char control_byte)	// return force reading in counts
 {
-	static unsigned char TB1, RB1, RB2, RB3;
+	static unsigned char RB1, RB2, RB3;
 	static short counts;
 	
-	// configure adc to read bipolar differential voltage between Ch0 and Ch1
-	TB1 = 0b10000011;
-	
 	CS = 0; // start writing
-	RB1 = SPI4_IO_F(TB1);	// send control byte
+	RB1 = SPI4_IO_F(control_byte);	// send control byte
 	RB2 = SPI4_IO_F(0x00);	// recieve force output (12-bit two's compliment)
 	RB3 = SPI4_IO_F(0x00);	
 	CS = 1; // stop writing
@@ -59,15 +56,15 @@ short adc_read(void)	// return force reading in counts
 	return counts;
 }
 
-short force_read(void)
+short force_read(unsigned char control_byte)
 {
-	static int N = 32;
+	static int N = 16;
 	static int i, sum, average; 
 	sum = 0; average = 0;
 	
 	for (i = 0; i < N; i++)		// average N adc readings
 	{
-		sum += adc_read();
+		sum += adc_read(control_byte);
 	}
 	
 	average = sum/N;

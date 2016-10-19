@@ -164,6 +164,12 @@ int main()
 				setFrequency(frequency);
 				break;
 			}
+			case 'F':
+			{
+				sprintf(buffer,"%hi %hi %hi\r\n", force_read(GET_FZ), force_read(GET_TX), force_read(GET_TY));
+				NU32_WriteUART3(buffer);
+				break;
+			}
         }
     }
 	

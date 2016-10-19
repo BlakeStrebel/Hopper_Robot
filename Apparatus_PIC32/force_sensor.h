@@ -8,9 +8,14 @@ representing Fx,Fy,Fz,Tx,Ty, and Tz. Fz value is read by 12-bit ADC converter (M
 
 */
 
+// control bytes
+#define GET_FZ 0b11000011
+#define GET_TX 0b11010011
+#define GET_TY 0b11100011
+
 void force_sensor_init();
 unsigned char SPI4_IO_F(unsigned char write);
-short adc_read(void);
-short force_read(void);
+short adc_read(unsigned char control_byte);
+short force_read(unsigned char control_byte);
 
 #endif

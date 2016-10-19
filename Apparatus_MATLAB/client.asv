@@ -3,7 +3,7 @@ function client()
 
 NU32_port = 'COM5'; % NU32 board serial port
 XY_port = 'COM4';   % GRBL board serial port
-DECIMATION = 2;
+
 % Opening COM connection
 if ~isempty(instrfind)
     fclose(instrfind);
@@ -116,7 +116,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
-            data = read_plot_matrix_position(NU32_Serial,0,ref(1:DECIMATION:end)) % Execute trajectory and plot results
+            read_plot_matrix_position(NU32_Serial,1,ref); % Execute trajectory and plot results
         case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
             fprintf(NU32_Serial,'%d\n',pos*1000);               % Convert mm -> um and send position to PIC32       
@@ -171,10 +171,7 @@ while ~has_quit
             fprintf(NU32_Serial,'%f\n',frequency);
             fprintf('Setting blower frequency to %f Hz\n',frequency);
         case 'F'
-            forces = fscanf(NU32_Serial,'%d %d %d');
-            forces(1) = forces(1) * 145/512;
-            forces(2:3) = forces(2:3) * 10/2048;
-            forces
+            forces = fscanf('%d %d %d');
             
         
         case '1'

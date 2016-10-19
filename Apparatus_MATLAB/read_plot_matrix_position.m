@@ -9,17 +9,18 @@ nsamples = fscanf(mySerial,'%d');       % first get the number of samples being 
 data = zeros(nsamples,4);               
 
 for i=1:nsamples
-    data(i,2:4) = fscanf(mySerial,'%d %f %d'); % read in data from PIC32; position (um), current(amps), force(counts) 
+    data(i,2:6) = fscanf(mySerial,'%d %f %d %d %d'); % read in data from PIC32; position (um), current(amps), Fz(counts), Tx(counts), Ty(counts) 
 end
 
 data(:,1) = ref;
-data(:,1:2) = data(:,1:2)/1000;  % convert um to mm
-data(:,4) = data(:,4)*145/512; % convert counts to N
+data(:,1:2) = data(:,1:2)/1000;     % convert um to mm
+data(:,4) = data(:,4)*145/512;      % convert counts to N
+data(:,5:6) = data(:,5:6)* 10/2048; % convert counts to N*m
 
 if nsamples > 1						        
     if graph == 1
     figure
-    stairs(times,data(:,2:4));            % plot the reference and actual
+    stairs(times,data(:,2:6));            % plot the reference and actual
     % compute the average error
     score = mean(abs(data(:,1)-data(:,2)));
     title(sprintf('Avg error: %5.1f mm',score))
