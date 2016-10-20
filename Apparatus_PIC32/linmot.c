@@ -92,7 +92,8 @@ void motor_home(void) {
 	SPECIAL_MODE = ON;			// turn current control back on
 	encoder_reset();			// reset encoder in new position
 	reset_pos();				// reset desired position to 0	
-	setMODE(POSITION_HOLD);				// hold position 
+	setMODE(POSITION_HOLD);				// hold position
+	reset_controller_error();
 	
 	
 	// Write position to client
@@ -115,6 +116,7 @@ void go_home(void) {
 	encoder_reset();			// reset encoder in new position
 	reset_pos();				// reset desired position to 0
 	setMODE(POSITION_HOLD);				// hold position
+	reset_controller_error();
 	
 	// Write position to client
 	char buffer[20];
