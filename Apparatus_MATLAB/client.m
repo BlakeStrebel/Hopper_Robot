@@ -11,7 +11,7 @@ if ~isempty(instrfind)
 end
 
 % configure ports
-XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',30);
+XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',15);
 NU32_Serial = serial(NU32_port, 'BaudRate', 403200, 'FlowControl', 'hardware','Timeout',15); 
 
 fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
@@ -116,7 +116,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
-            read_plot_matrix_position(NU32_Serial,0,ref(1:DECIMATION:end)); % Execute trajectory and plot results
+            read_plot_matrix_position(NU32_Serial,1,ref(1:DECIMATION:end)); % Execute trajectory and plot results
         case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
             fprintf(NU32_Serial,'%d\n',pos*1000);               % Convert mm -> um and send position to PIC32       
