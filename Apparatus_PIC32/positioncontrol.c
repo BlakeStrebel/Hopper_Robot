@@ -13,8 +13,8 @@ static volatile float Kd = .006;   	// A/(um/s)
 static volatile int desired_pos = 0;    
 
 // PID force control gains
-static volatile float Fp = 0.017655;	// A/count
-static volatile float Fi = 0.003531;		// A/(count*s)
+static volatile float Fp = 0.0088275;	// A/count
+static volatile float Fi = 0.0035310;		// A/(count*s)
 static volatile float Fd = 0;	// A/(count/s)
 static volatile short desired_force = 0;
 
@@ -146,7 +146,7 @@ void reset_controller_error(void)
 float position_controller(int reference, int actual)  // Calculate control effort using PID position feedback
 {
 	static float u;
- 
+	
     P.Enew = reference - actual;              // Calculate error
     P.Eint = P.Eint + P.Enew;                     // Calculate intergral error
     P.Edot = P.Enew - P.Eold;                     // Calculate derivative error
@@ -170,7 +170,7 @@ float position_controller(int reference, int actual)  // Calculate control effor
 float force_controller(short reference, short actual) // Calculate control effort using feedforward model based on motor constant and PID force feedback
 {
 	static float u; 
-	static float Km = 0; 	 // Motor constant in A/count
+	static float Km = 0.022656; 	 // Motor constant in A/count
 	
 	F.Enew = reference - actual;	// Calculate error
 	F.Eint = F.Eint + F.Enew;			// Calculate integral error
