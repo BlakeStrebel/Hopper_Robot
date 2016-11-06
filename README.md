@@ -31,12 +31,12 @@ This apparatus is primarily controlled by a PIC32 microcontroller that communica
 
 To control the stepper motors used for the XY table, an Arduino was flashed with the G-Code interpreter [GRBL](https://github.com/grbl/grbl). G-Code commands are sent to the arduino via a serial port to direct the linear motor around the bed. The same MATLAB client is also used for this communication.
 
-[PIC32 Code]()
-[MATLAB Code]()
+* [PIC32 Code](https://github.com/BlakeStrebel/Hopper_Robot/tree/master/Apparatus_PIC32)
+* [MATLAB Code](https://github.com/BlakeStrebel/Hopper_Robot/tree/master/Apparatus_MATLAB)
 
 ## Electronics ##
 The majority of the electronics for the apparatus are contained within an electrical enclosure mounted to the bed. A PCB is currently being designed to replace the breadboard containing the electronics. The apparatus is described using two circuit diagrams:
-* [Linear Motor Control Circuit](LinearMotorControl.pdf) 
-* [Blower Control Circuit](BlowerControl).
+* [Linear Motor Control Circuit](Images/LinearMotorControl.pdf) 
+* [Blower Control Circuit](Images/BlowerControl).
 
 ![Overview](Images/Enclosure.jpg)
