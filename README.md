@@ -27,7 +27,7 @@ The gantry system also has additional benfits. It is being used to characterize 
 ![Overview](Images/Intrusions.gif)
 
 ## Code ##
-This apparatus is primarily controlled by a PIC32 microcontroller that communicates with a MATLAB client over a serial connection. The PIC32 reads data from various sensors and interfaces with the linear motor/blower drivers. It also impliments the 2 KHz force/position feedback controllers that control the linear motor. Reference trajectories for the linear motor are generated in MATLAB and sent over the serial port to be stored on the PIC32. For data collection, a simple MATLAB script automates testing procedures.
+This apparatus is primarily controlled by a [PIC32](http://hades.mech.northwestern.edu/index.php/NU32) microcontroller that communicates with a MATLAB client over a serial connection. The PIC32 reads data from various sensors and interfaces with the linear motor/blower drivers. It also impliments the 2 KHz force/position feedback controllers that control the linear motor. Reference trajectories for the linear motor are generated in MATLAB and sent over the serial port to be stored on the PIC32. For data collection, a simple MATLAB script automates testing procedures.
 
 To control the stepper motors used for the XY table, an Arduino was flashed with the G-Code interpreter [GRBL](https://github.com/grbl/grbl). G-Code commands are sent to the arduino via a serial port to direct the linear motor around the bed. The same MATLAB client is also used for this communication.
 
