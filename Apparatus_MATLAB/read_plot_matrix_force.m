@@ -9,7 +9,7 @@ end
 
 for i =1:nsamples
     data(i,1) = data(i,1)/1000;                  % convert um -> mm
-    data(i,2) = data(i,2)*12.5;                       % 
+    data(i,2) = data(i,2)*12.5;                  % convert A -> N
     data(i,3) = data(i,3)*145/512;               % convert counts -> N
     data(i,6) = ref(i)*145/512;
     times(i) = (i-1)*0.5;                       % 0.5 ms between samples

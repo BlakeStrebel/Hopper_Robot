@@ -120,8 +120,8 @@ str = sprintf('%d samples at %7.2f Hz taking %5.3f sec', ...
 figure
 plot(ref);
 title(str);
-% border = 0.1*(max(ref)-min(ref));
-% axis([0, length(ref), min(ref)-border, max(ref)+border]);
+border = 0.1*(max(ref)-min(ref));
+axis([0, length(ref), min(ref)-border, max(ref)+border]);
 ylabel('Motor force (N)'); 
 xlabel('Sample number');
 set(gca,'FontSize',18);

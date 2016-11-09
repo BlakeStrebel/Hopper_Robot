@@ -1,4 +1,4 @@
-function [position_offset, force_offset] = plot_offset(position, force)
+function [position_offset, force_offset] = offset(position, force)
 
 [initial_height,~,index] = find_ground2(position,force);
 

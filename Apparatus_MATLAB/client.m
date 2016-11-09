@@ -4,7 +4,6 @@ function client()
 NU32_port = 'COM5'; % NU32 board serial port
 XY_port = 'COM4';   % GRBL board serial port
 DECIMATION = 2;
-
 % Opening COM connection
 if ~isempty(instrfind)
     fclose(instrfind);
@@ -13,7 +12,7 @@ end
 
 % configure ports
 XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',15);
-NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',15); 
+NU32_Serial = serial(NU32_port, 'BaudRate', 403200, 'FlowControl', 'hardware','Timeout',15); 
 
 fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 
@@ -37,22 +36,29 @@ while ~has_quit
     % display the menu options
     %fprintf(['     a: Read encoder (counts)                 b: Read encoder (mm)\n' ...
     %         '     c: Set position gains                    d: Get position gains\n' ...
-    %         '     e: Acknowledge motor error               f: Linear motor off\n' ...
-    %         '     g: Linear motor on                       h: Home linear motor\n' ...
+    %         '     e: Acknowledge motor error               f: Motor off\n' ...
+    %         '     g: Motor on                              h: Motor home\n' ...
     %         '     i: Load position trajectory              l: Execute position trajectory\n' ...                   
-    %         '     n: Go to position                        o: Go home\n' ...
+    %         '     o: Go home\n' ...
     %         '     q: Quit client                           r: Get mode\n' ...    
     %         '     s: Get state\n' ...
-    %         '     t: Set force gains\n' ...                u: Get force gains\n' ...
-    %         '     v: Load force trajectory                 w: Execute force trajectory\n' ...
+    %         '     t: Set motor current\n' ...              u: Load current trajectory\n' ...
+    %         '     v: Execute current trajectory\n' ...
     %         '     A: Blower on                             B: Blower off\n' ...
-    %         '     C: Set frequency                                                             ])';  
+    %         '     C: Set frequency                         ' ...
+    %         '     1: GRBL\n' ...
+    %         '     : ]);
     
     % read the user's choice
     selection = input('\nENTER COMMAND: ', 's');
-   
-    fprintf(NU32_Serial,'%c\n',selection);  % send the command to the PIC32
-
+    
+    % check where to send the selection
+    if strcmp(selection,'1')
+      % don't send command to PIC32  
+    else
+        fprintf(NU32_Serial,'%c\n',selection);  % send the command to the PIC32
+    end
+    
     % take the appropriate action
     switch selection
         
@@ -98,17 +104,10 @@ while ~has_quit
             position = position/1000;                               % Convert position to mm
             fprintf('The motor position is %.2f mm.\n',position);
         case 'i'
-            mode = input('Enter mode (''linear'', ''cubic'', ''step'', or ''sine''): ');
-            if strcmp(mode,'sine')
-                A = input('Enter amplitude (mm): ');
-                f = input('Enter frequency (Hz): ');
-                t = 0:.0005:0.9995;
-                ref = A + A*sin(2*pi*f*t-pi/2);
-            else
-                trajectory = input('Enter position trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:');
-                ref = genRef_position(trajectory,mode);    % Generate step trajectory
-            end
+            mode = input('Enter mode (''linear'', ''cubic'', or ''step''): ');
+            trajectory = input('Enter position trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:');
             
+            ref = genRef_position(trajectory,mode);    % Generate step trajectory
             ref = ref*1000;                            % Convert trajectory to um
           
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
@@ -117,7 +116,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
-            read_plot_matrix_position(NU32_Serial,1,ref(1:DECIMATION:end),f); % Execute trajectory and plot results
+            read_plot_matrix_position(NU32_Serial,1,ref(1:DECIMATION:end)); % Execute trajectory and plot results
         case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
             fprintf(NU32_Serial,'%d\n',pos*1000);               % Convert mm -> um and send position to PIC32       
@@ -150,16 +149,10 @@ while ~has_quit
             Fd = fscanf(NU32_Serial, '%f');    % Get Fd (A/counts/s))
             fprintf('The force controller is using Fp = %3.5f, Fi = %3.5f, and Fd = %3.5f.\n',[Fp*145/512,Fi*145/512,Fd*145/512]);    % Convert counts -> N and print gains
         case 'v'
-            mode = input('Enter mode (''linear'', ''cubic'', ''step'', or ''sine''): ');
-            if strcmp(mode,'sine')
-                A = input('Enter amplitude (N): ');
-                f = input('Enter frequency (Hz): ');
-                t = 0:.0005:0.9995;
-                ref = A + A*sin(2*pi*f*t-pi/2);
-            else
-                trajectory = input('Enter trajectory, in sec and N [time1, force1; time2, force2; ...]: ');
-                ref = genRef_force(trajectory,mode);   % Generate trajectory
-            end
+            mode = input('Enter mode (''linear'', ''cubic'', or ''step''): ');
+            trajectory = input('Enter trajectory, in sec and N [time1, force1; time2, force2; ...]: ');
+            
+            ref = genRef_position(trajectory,mode);   % Generate trajectory
             ref = ref*512/145;                        % Convert N -> counts
                         
             fprintf(NU32_Serial,'%d\n',size(ref,2));   % Send number of samples to PIC32
@@ -177,6 +170,33 @@ while ~has_quit
             frequency = input('Enter desired blower frequency in Hz: ');
             fprintf(NU32_Serial,'%f\n',frequency);
             fprintf('Setting blower frequency to %f Hz\n',frequency);
+        case 'F'
+            forces = fscanf(NU32_Serial,'%d %d %d');
+            forces(1) = forces(1) * 145/512;
+            forces(2:3) = forces(2:3) * 10/2048;
+            forces
+        case '1'
+            fgets(XY_Serial);   % Clear startup text in serial input
+            buffer = fgets(XY_Serial);
+            fprintf('%s',buffer);
+            buffer = fgets(XY_Serial);
+            fprintf('%s',buffer);
+            
+            is_grbl = true; % Continue sending commands until 'x'
+            
+            while is_grbl
+                command = input('grbl command: ','s');  % Get command from user
+                if command == 'x'
+                    is_grbl = false;
+                    fclose(XY_Serial);
+                    fopen(NU32_Serial);
+                else
+                    fprintf(XY_Serial,'%s\n',command);  % Send command to grbl
+                    buffer = fgets(XY_Serial);          % Read the echo from the grbl to verify correct communication
+                    fprintf('%s',buffer);
+                end   
+            end    
+            
         otherwise
             fprintf('Invalid Selection %c\n', selection);
     end
