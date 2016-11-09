@@ -1,10 +1,31 @@
 function position_experiment()
 % Runs position control experiment and records data
 
-numTrials = 10;
-filename = 'edges.mat';
-trajectory = [0,0;.5,40;1,80];    % [t1,p1;t2,p2;t3,p3]
+%% Experimental Parameters
+
+filename = 's35.mat';   % filename for saving data
+numTrials = 5;         % number of times each intrusion is performed
+DECIMATION = 2;         % sample rate = control rate / DECIMATION (needs to match value on PIC32)
+
+% Linear motor trajectory
+tend = 5/9;
+trajectory = [0,0;tend/2,25;tend,50];    % [t1,p1;t2,p2;t3,p3]
 mode = 'linear';                  % 'linear','cubic', or 'step' trajectory
+
+% XY table behavior
+% Dimensions are about 340 x 1275
+initial_posy = 337;  % XY table moves to this position after homing
+initial_posx = 170-5;  % Limit switches tend to get hit if these values are zero
+step_sizex = 5;   % step distance between intrusions
+step_sizey = 300;
+stepsx = 2;         % number of intrusions in each direction
+stepsy = 3;
+
+%% Prevent user from overwriting data
+if (exist(filename,'file'))
+   warning = sprintf('The file %s already exists, continuing will overwrite previous data.\n<Enter> to continue; <CTRL-c> to quit',filename);
+    input(warning);  
+end
 
 %% Configure serial communications
 
@@ -19,7 +40,7 @@ end
 
 % configure ports
 XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',15);
-NU32_Serial = serial(NU32_port, 'BaudRate', 403200, 'FlowControl', 'hardware','Timeout',15); 
+NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',15); 
 
 fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 
@@ -69,13 +90,14 @@ for trial = 1:numTrials
     
     % fluidize the bed
     frequency = 56;
+   
     time = 10;
     fluidize_bed(NU32_Serial,frequency,time);
     pause(10);
     
     % move table to initial position
-    posy = 300;   % y coordinate
-    posx = 100;    % x coordinate
+    posy = initial_posy;   % y coordinate
+    posx = initial_posx;    % x coordinate
     grbl_moveX(XY_Serial,posx);
     grbl_moveY(XY_Serial,posy);
     
@@ -87,15 +109,8 @@ for trial = 1:numTrials
     
     %% Perform intrusions and record data
     
-    DECIMATION = 2; % sample rate = control rate / DECIMATION (needs to match value on PIC32)
-    
     intrude = 'l';       % execute trajectory
     intrusion = 1;       % counter
-    
-    
-    step_size = 200; % movement distance
-    stepsx = 2;      % number of steps in x direction
-    stepsy = 3;      % number of steps in y direction
     
     fprintf('Plunging motor ...\n');
     for i = 1:stepsx
@@ -119,9 +134,9 @@ for trial = 1:numTrials
             % Move table
             if j ~= stepsy
                 if mod(i,2) == 1
-                    posy = posy + step_size; % move position forward
+                    posy = posy + step_sizey; % move position forward
                 else
-                    posy = posy - step_size; % move position backward
+                    posy = posy - step_sizey; % move position backward
                 end
                 grbl_moveY(XY_Serial,posy); % move table to target position
                 pause(3);                   % wait
@@ -132,7 +147,7 @@ for trial = 1:numTrials
         end
         
         if i ~= stepsx
-            posx = posx + step_size;    % move position forward
+            posx = posx + step_sizex;    % move position forward
             grbl_moveX(XY_Serial,posx); % move table to target position
             pause(4);                   % wait
         end

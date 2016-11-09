@@ -67,7 +67,7 @@ if strcmp(method,'cubic')  % calculate a cubic interpolation trajectory
       refCtr = refCtr + 1;
     end
   end
-  
+   
 elseif strcmp(method,'linear')  % calculate a linear interpolation trajectory  
   
   timelist = reflist(:,1);
@@ -93,6 +93,35 @@ elseif strcmp(method,'linear')  % calculate a linear interpolation trajectory
       refCtr = refCtr + 1;
     end
   end
+  
+  elseif strcmp(method,'cubic')  % calculate a cubic interpolation trajectory
+
+  timelist = reflist(:,1);
+  poslist = reflist(:,2);
+  vellist(1) = 0; vellist(numpos) = 0;
+  if numpos >= 3
+    for i=2:numpos-1
+      vellist(i) = (poslist(i+1)-poslist(i-1))/(timelist(i+1)-timelist(i-1));
+    end
+  end
+
+  refCtr = 1;
+  for i=1:numpos-1            % go through each segment of trajectory
+    timestart = timelist(i); timeend = timelist(i+1); 
+    deltaT = timeend - timestart;
+    posstart = poslist(i); posend = poslist(i+1);
+    velstart = vellist(i); velend = vellist(i+1);
+    a0 = posstart;            % calculate coeffs of traj pos = a0+a1*t+a2*t^2+a3*t^3
+    a1 = velstart;
+    a2 = (3*posend - 3*posstart - 2*velstart*deltaT - velend*deltaT)/(deltaT^2);
+    a3 = (2*posstart + (velstart+velend)*deltaT - 2*posend)/(deltaT^3);
+    while (refCtr-1)*dt < timelist(i+1)
+      tseg = (refCtr-1)*dt - timelist(i);
+      ref(refCtr) = a0 + a1*tseg + a2*tseg^2 + a3*tseg^3;  % add an element to ref array
+      refCtr = refCtr + 1;
+    end
+  end
+    
 else  % default is step trajectory
 
 % convert the list of times to a list of sample numbers
