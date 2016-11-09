@@ -23,7 +23,7 @@
 #pragma config FMIIEN = OFF         // Use RMII (not MII) for ethernet
 #pragma config FSRSSEL = PRIORITY_6 // Shadow Register Set for interrupt priority 6
 
-#define NU32_DESIRED_BAUD 403200    // Baudrate for RS232
+#define NU32_DESIRED_BAUD 230400    // Baudrate for RS232
 
 // Perform startup routines:
 //  Make NU32_LED1 and NU32_LED2 pins outputs (NU32_USER is by default an input)
