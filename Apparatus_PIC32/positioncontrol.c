@@ -7,9 +7,9 @@
 #include "force_sensor.h"
 
 // PID position control gains
-static volatile float Kp = .00175;	// A/um
-static volatile float Ki = .00001;	// A/(um*s)
-static volatile float Kd = .006;   	// A/(um/s)
+static volatile float Kp = .00185;	// A/um
+static volatile float Ki = .000015;	// A/(um*s)
+static volatile float Kd = .00525;   	// A/(um/s)
 static volatile int desired_pos = 0;    
 
 // PID force control gains
@@ -45,6 +45,7 @@ void set_position_gains(void)   // recieve position control gains
     Kp = Kptemp;                                            // Set gains
     Ki = Kitemp;
     Kd = Kdtemp;
+	reset_controller_error();
     __builtin_enable_interrupts();                          // Reenable interrupts
 }
 
@@ -69,6 +70,7 @@ void set_force_gains(void)
     Fp = Fptemp;                                            // Set gains
     Fi = Fitemp;
     Fd = Fdtemp;
+	reset_controller_error();
     __builtin_enable_interrupts();                          // Reenable interrupts
 }
 
@@ -154,9 +156,9 @@ float position_controller(int reference, int actual)  // Calculate control effor
     
     u = Kp*P.Enew + Ki*P.Eint + Kd*P.Edot;        // Calculate effort
         
-    if (u > 6)                           // Set max/min current
+    if (u > 10)                           // Set max/min current
     {
-        u = 6;
+        u = 10;
     }
     else if (u < -1)
     {
@@ -213,8 +215,8 @@ void __ISR(_TIMER_4_VECTOR, IPL6SRS) Controller(void)  // 2 kHz position interru
             if (i == getN())    // Done tracking when index equals number of samples
             { 
 				i = 0;                  // Reset index
-				setCurrent(0);			// Reset current
-                setMODE(IDLE);			// Idle motor	
+				//setCurrent(0);			// Reset current
+                setMODE(POSITION_HOLD);			// Idle motor	
             }
             else
             {

@@ -13,7 +13,7 @@ end
 
 % configure ports
 XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',15);
-NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',15); 
+NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',30); 
 
 fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 
@@ -98,12 +98,17 @@ while ~has_quit
             position = position/1000;                               % Convert position to mm
             fprintf('The motor position is %.2f mm.\n',position);
         case 'i'
-            mode = input('Enter mode (''linear'', ''cubic'', ''step'', or ''sine''): ');
+            mode = input('Enter mode (''linear'', ''cubic'', ''step'', ''sine'', or ''special''): ');
             if strcmp(mode,'sine')
                 A = input('Enter amplitude (mm): ');
                 f = input('Enter frequency (Hz): ');
                 t = 0:.0005:0.9995;
                 ref = A + A*sin(2*pi*f*t-pi/2);
+            elseif strcmp(mode,'special')
+                v = input('Enter desired velocity (mm/s): ');
+                z = input('Enter distance to desired velocity (mm): ');
+                zend = input('Enter final distance (mm): ');
+                ref = genRef_position_special(v,z,zend);
             else
                 trajectory = input('Enter position trajectory, in sec and mm [time1, pos1; time2, pos2; ...]:');
                 ref = genRef_position(trajectory,mode);    % Generate step trajectory
@@ -117,7 +122,7 @@ while ~has_quit
                fprintf(NU32_Serial,'%f\n',ref(i)); 
             end
         case 'l'
-            read_plot_matrix_position(NU32_Serial,1,ref(1:DECIMATION:end),f); % Execute trajectory and plot results
+            read_plot_matrix_position(NU32_Serial,1,ref(1:DECIMATION:end)); % Execute trajectory and plot results
         case 'n'
             pos = input('Enter the desired position in mm: ');  % Get position (mm)
             fprintf(NU32_Serial,'%d\n',pos*1000);               % Convert mm -> um and send position to PIC32       

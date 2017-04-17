@@ -72,6 +72,7 @@ void motor_on(void) {
 	_CP0_SET_COUNT(0);						
 	while (_CP0_GET_COUNT() < 20000000){;}	// delay
 	SWITCH_ON = ON;							// switch motor on
+	reset_controller_error();
 }
 
 void motor_off(void) {

@@ -3,23 +3,23 @@ function position_experiment()
 
 %% Experimental Parameters
 
-filename = 's35.mat';   % filename for saving data
-numTrials = 5;         % number of times each intrusion is performed
+filename = 'data.mat';   % filename for saving data
+numTrials = 3;         % number of times each intrusion is performed
 DECIMATION = 2;         % sample rate = control rate / DECIMATION (needs to match value on PIC32)
 
 % Linear motor trajectory
-tend = 5/9;
-trajectory = [0,0;tend/2,25;tend,50];    % [t1,p1;t2,p2;t3,p3]
+
+trajectory = [0,0;.5,50/2;1,50];    % [t1,p1;t2,p2;t3,p3]
 mode = 'linear';                  % 'linear','cubic', or 'step' trajectory
 
 % XY table behavior
 % Dimensions are about 340 x 1275
-initial_posy = 337;  % XY table moves to this position after homing
-initial_posx = 170-5;  % Limit switches tend to get hit if these values are zero
-step_sizex = 5;   % step distance between intrusions
-step_sizey = 300;
-stepsx = 2;         % number of intrusions in each direction
-stepsy = 3;
+step_sizex = 0;%76;                   % step distance between intrusions
+step_sizey = 64;
+initial_posy = 200;                 % XY table moves to this position after homing
+initial_posx = 160-round(step_sizex/2);    % Limit switches tend to get hit if these values are zero
+stepsx = 1;                         % number of intrusions in each direction
+stepsy = 10;%floor(1000/step_sizey);%3;
 
 %% Prevent user from overwriting data
 if (exist(filename,'file'))
@@ -39,8 +39,8 @@ if ~isempty(instrfind)
 end
 
 % configure ports
-XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',15);
-NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',15); 
+XY_Serial = serial(XY_port, 'BaudRate', 115200,'Timeout',20);
+NU32_Serial = serial(NU32_port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',30); 
 
 fprintf('Opening ports %s and %s....\n',NU32_port,XY_port);
 
@@ -54,10 +54,16 @@ clean1 = onCleanup(@() cleanup(NU32_Serial,XY_Serial)); % close serial ports and
 
 % Store metadata info in metadata struct
 experimental_data.metadata.date = datetime();
-experimental_data.metadata.foot_radius = 25.4; % mm
+experimental_data.metadata.foot_diameter = 50.8; % mm
 experimental_data.metadata.deceleration_time = 10; % s
 experimental_data.metadata.control_frequency = 2000; % Hz
 experimental_data.metadata.sampling_frequency = 1000; % Hz
+experimental_data.metadata.step_sizex = step_sizex; % mm 
+experimental_data.metadata.step_sizey = step_sizey; % mm
+experimental_data.metadata.stepsx = stepsx; % mm 
+experimental_data.metadata.stepsy = stepsy; % mm
+experimental_data.metadata.initial_posx = initial_posx; % mm 
+experimental_data.metadata.initial_posy = initial_posy; % mm
 
 %% Setup apparatus for experiment
 
@@ -72,6 +78,7 @@ fprintf('Loading trajectory ...\n');
 
 fprintf(NU32_Serial,'%c\n','i');            % tell PIC to load position trajectory
 ref = genRef_position(trajectory,mode);     % generate trajectory
+% ref = genRef_position_special(1500,30,125);
 ref = ref * 1000;                           % convert trajectory to um
 fprintf(NU32_Serial,'%d\n',size(ref,2));    % send number of samples to PIC32
 for i = 1:size(ref,2)
@@ -91,9 +98,9 @@ for trial = 1:numTrials
     % fluidize the bed
     frequency = 56;
    
-    time = 10;
+    time = 7;
     fluidize_bed(NU32_Serial,frequency,time);
-    pause(10);
+    pause(8);
     
     % move table to initial position
     posy = initial_posy;   % y coordinate
@@ -101,11 +108,12 @@ for trial = 1:numTrials
     grbl_moveX(XY_Serial,posx);
     grbl_moveY(XY_Serial,posy);
     
-    % determine bed height
-    fprintf('Determining bed height\n');
-    img_name = sprintf('trial%d.bmp',trial);
-    bedheight = acquire_image(img_name);
-    experimental_data.trials(trial).bedheight = bedheight;
+%     % determine bed height
+%     fprintf('Determining bed height\n');
+%     img_name = sprintf('trial%d.bmp',trial);
+%     bedheight = acquire_image(img_name);
+%     experimental_data.trials(trial).bedheight = bedheight;
+    pause(12);
     
     %% Perform intrusions and record data
     
@@ -113,8 +121,9 @@ for trial = 1:numTrials
     intrusion = 1;       % counter
     
     fprintf('Plunging motor ...\n');
-    for i = 1:stepsx
-        for j = 1:stepsy
+    for i = 1:stepsy 
+        for j = 1:stepsx 
+            
             % Perform intrusion
             fprintf(NU32_Serial,'%c\n',intrude);                                      % tell PIC32 to intrude
             data = read_plot_matrix_position(NU32_Serial,0,ref(1:DECIMATION:end));    % read data back from PIC32
@@ -131,25 +140,22 @@ for trial = 1:numTrials
             experimental_data.trials(trial).intrusion(intrusion).x_pos = posx;
             experimental_data.trials(trial).intrusion(intrusion).y_pos = posy;
             
-            % Move table
-            if j ~= stepsy
-                if mod(i,2) == 1
-                    posy = posy + step_sizey; % move position forward
-                else
-                    posy = posy - step_sizey; % move position backward
-                end
-                grbl_moveY(XY_Serial,posy); % move table to target position
-                pause(3);                   % wait
-            end
-            
             intrusion = intrusion + 1; % increment intrusion number
             
+            % Move table
+            if j < stepsx
+                posx = posx + step_sizex;
+            else
+                posx = posx - step_sizex;
+            end
+            grbl_moveX(XY_Serial,posx); % move table to target position
+            pause(2);                   % wait
         end
         
-        if i ~= stepsx
-            posx = posx + step_sizex;    % move position forward
-            grbl_moveX(XY_Serial,posx); % move table to target position
-            pause(4);                   % wait
+        if i ~= stepsy
+            posy = posy + step_sizey;    % move position forward
+            grbl_moveY(XY_Serial,posy); % move table to target position
+            pause(2);                   % wait
         end
     end
     

@@ -121,7 +121,7 @@ elseif strcmp(method,'linear')  % calculate a linear interpolation trajectory
       refCtr = refCtr + 1;
     end
   end
-    
+ 
 else  % default is step trajectory
 
 % convert the list of times to a list of sample numbers
